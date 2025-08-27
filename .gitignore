@@ -19,5 +19,8 @@ __pycache__
 *.iws
 *.iml
 
+# VSCode
+*.code-workspace
+
 # Repository wide ignore mac DS_Store files
 .DS_Store
