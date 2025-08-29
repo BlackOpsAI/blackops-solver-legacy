@@ -190,7 +190,7 @@ if include_java_stubs:
 
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
-blackops_legacy_version = "1.24.0"
+blackops_legacy_version = "1.24.0b1"
 
 setup(
     name="blackops_legacy",
