@@ -2,15 +2,15 @@
 
 [BlackOps](https://github.com/BlackOpsAI/blackops-solver-legacy)
 
-[![PyPI](https://img.shields.io/pypi/v/blackops_legacy.?style=for-the-badge& "PyPI")](https://pypi.org/project/blackops_legacy./)
+[![PyPI](https://img.shields.io/pypi/v/blackops-legacy?style=for-the-badge& "PyPI")](https://pypi.org/project/blackops-legacy)
 [![Python support](https://img.shields.io/badge/Python-3.10+-brightgreen.svg?style=for-the-badge)](https://www.python.org/downloads)
-[![License](https://img.shields.io/github/license/blackops-solver/blackops-solver-legacy?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/github/license/BlackOpsAI/blackops-solver-legacy?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ### Powered by:
 
 ![Timefold Logo](https://raw.githubusercontent.com/TimefoldAI/timefold-solver/main/docs/src/modules/ROOT/images/shared/timefold-logo.png)
 
-_Planning optimization made easy_: [blackops_legacy.ai](https://blackops_legacy.ai)
+_Planning optimization made easy_: [timefold.ai](https://timefold.ai)
 
 BlackOps Solver is a 100% Timefold 1.24.0 compatible AI constraint solver you can use to optimize
 the Vehicle Routing Problem, Employee Rostering, Maintenance Scheduling, Task Assignment, School Timetabling,
