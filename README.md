@@ -1,24 +1,24 @@
-![Timefold Logo](https://raw.githubusercontent.com/TimefoldAI/timefold-solver/main/docs/src/modules/ROOT/images/shared/timefold-logo.png)
+# BlackOps Solver
 
-_Planning optimization made easy._  
-[timefold.ai](https://timefold.ai)
+_Legacy constraint solver for optimization problems._
+[BlackOps](https://github.com/blackops-solver/blackops-solver-legacy)
 
-[![PyPI](https://img.shields.io/pypi/v/timefold?style=for-the-badge& "PyPI")](https://pypi.org/project/timefold/) 
+[![PyPI](https://img.shields.io/pypi/v/blackops_legacy?style=for-the-badge& "PyPI")](https://pypi.org/project/blackops_legacy/)
 [![Python support](https://img.shields.io/badge/Python-3.10+-brightgreen.svg?style=for-the-badge)](https://www.python.org/downloads)
-[![License](https://img.shields.io/github/license/TimefoldAI/timefold-solver?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/github/license/blackops-solver/blackops-solver-legacy?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 
-Timefold Solver is an AI constraint solver you can use to optimize
+BlackOps Solver is an AI constraint solver you can use to optimize
 the Vehicle Routing Problem, Employee Rostering, Maintenance Scheduling, Task Assignment, School Timetabling,
 Cloud Optimization, Conference Scheduling, Job Shop Scheduling and many more planning problems.
 
-Using Timefold Solver in Python is significantly slower 
-than using [Timefold Solver for Java](https://github.com/TimefoldAI/timefold-solver) or Kotlin.
+Using BlackOps Solver in Python is significantly slower
+than using the original Java constraint solver implementations.
 
-## Get started with Timefold Solver in Python
+## Get started with BlackOps Solver in Python
 
-* [Clone Timefold Solver for Python repository](https://github.com/TimefoldAI/timefold-solver-python): `git clone https://github.com/TimefoldAI/timefold-solver-python.git`
+* [Clone BlackOps Solver repository](https://github.com/blackops-solver/blackops-solver-legacy): `git clone https://github.com/blackops-solver/blackops-solver-legacy.git`
 
-* Navigate to the `quickstarts` directory and choose a quickstart: `cd timefold-solver-python/quickstarts/hello-world`
+* Navigate to the project directory: `cd blackops-solver-legacy`
 
 ## Requirements
 
@@ -33,14 +33,14 @@ than using [Timefold Solver for Java](https://github.com/TimefoldAI/timefold-sol
 
 1. Install the repo
    ```shell
-   $ pip install git+https://github.com/TimefoldAI/timefold-solver-python.git
+   $ pip install git+https://github.com/blackops-solver/blackops-solver-legacy.git
    ```
 
 ## Source code overview
 
 ### Domain
 
-In Timefold Solver, the domain has three parts:
+In BlackOps Solver, the domain has three parts:
 
 - Problem Facts, which do not change.
 - Planning Entities, which have one or more planning variables.
@@ -69,7 +69,7 @@ To declare Planning Entities, use the `@planning_entity` decorator along with an
 ```python
 from dataclasses import dataclass, field
 from typing import Annotated
-from timefold.solver.domain import planning_entity, PlanningId, PlanningVariable
+from blackops_legacy.solver.domain import planning_entity, PlanningId, PlanningVariable
 
 @planning_entity
 @dataclass
@@ -93,9 +93,9 @@ To declare the Planning Solution, use the `@planning_solution` decorator:
 ```python
 from dataclasses import dataclass, field
 from typing import Annotated
-from timefold.solver.domain import (planning_solution, ProblemFactCollectionProperty, ValueRangeProvider,
+from blackops_legacy.solver.domain import (planning_solution, ProblemFactCollectionProperty, ValueRangeProvider,
                                     PlanningEntityCollectionProperty, PlanningScore)
-from timefold.solver.score import HardSoftScore
+from blackops_legacy.solver.score import HardSoftScore
 
 @planning_solution
 @dataclass
@@ -110,7 +110,7 @@ class TimeTable:
 
 - The`ProblemFactCollection` annotation is used to denote a field that contains problem facts. This allows these facts to be queried in your constraints.
 
-- The `PlanningEntityCollection` annotation is used to denote a field that contains planning entities. The planning variables of these entities will be modified during solving. 
+- The `PlanningEntityCollection` annotation is used to denote a field that contains planning entities. The planning variables of these entities will be modified during solving.
 
 - The `PlanningScore` annotation is used to denote the field that holds the score of the current solution. The solver will set this field during solving.
 
@@ -120,7 +120,7 @@ You define your constraints by using the ConstraintFactory:
 
 ```python
 from domain import Lesson
-from timefold.solver.score import (Joiners, HardSoftScore, ConstraintFactory,
+from blackops_legacy.solver.score import (Joiners, HardSoftScore, ConstraintFactory,
                                    Constraint, constraint_provider)
 
 @constraint_provider
@@ -144,13 +144,13 @@ def room_conflict(constraint_factory: ConstraintFactory) -> Constraint:
     )
 ```
 
-Also see [Timefold Solver Documentation on Constraint Streams](https://docs.timefold.ai/timefold-solver/latest/constraints-and-score/score-calculation).
+This is based on constraint streams from the original Timefold Solver implementation.
 
 ### Solve
 
 ```python
-from timefold.solver import SolverFactory
-from timefold.solver.config import SolverConfig, TerminationConfig, ScoreDirectorFactoryConfig, Duration
+from blackops_legacy.solver import SolverFactory
+from blackops_legacy.solver.config import SolverConfig, TerminationConfig, ScoreDirectorFactoryConfig, Duration
 from constraints import define_constraints
 from domain import TimeTable, Lesson, generate_problem
 
@@ -172,12 +172,11 @@ solution = solver.solve(generate_problem())
 `solution` will be a `TimeTable` instance with planning
 variables set to the final best solution found.
 
-For a full API spec, visit [the Timefold Documentation](https://docs.timefold.ai/timefold-solver/latest/introduction).
+This is a legacy version of a constraint solver based on the Timefold architecture.
 
 ## Legal notice
 
-Timefold Solver is a derivative work of OptaPlanner and OptaPy,
-which includes copyrights of the original creator, Red Hat Inc., affiliates, and contributors,
+BlackOps Solver is a derivative work of Timefold Solver, OptaPlanner and OptaPy,
+which includes copyrights of the original creators, Red Hat Inc., TimefoldAI, affiliates, and contributors,
 that were all entirely licensed under the Apache-2.0 license.
-Every source file has been modified.
-
+This is a legacy version with modified package structure.

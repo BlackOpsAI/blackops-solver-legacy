@@ -6,18 +6,20 @@ from typing import Awaitable, TypeVar, Generic, Callable, TYPE_CHECKING
 from ._future import wrap_future
 from ._problem_change import ProblemChange, ProblemChangeWrapper
 from ._solver_factory import SolverFactory
-from ._timefold_java_interop import update_log_level
+from ._blackops_java_interop import update_log_level
 from .config import SolverConfig, SolverConfigOverride, SolverManagerConfig
 
 if TYPE_CHECKING:
     # These imports require a JVM to be running, so only import if type checking
-    from ai.timefold.solver.core.api.solver import (SolverManager as _JavaSolverManager,
-                                                    SolverJob as _JavaSolverJob,
-                                                    SolverJobBuilder as _JavaSolverJobBuilder)
+    from ai.timefold.solver.core.api.solver import (
+        SolverManager as _JavaSolverManager,
+        SolverJob as _JavaSolverJob,
+        SolverJobBuilder as _JavaSolverJobBuilder,
+    )
 
-Solution_ = TypeVar('Solution_')
-ProblemId_ = TypeVar('ProblemId_')
-logger = logging.getLogger('timefold.solver')
+Solution_ = TypeVar("Solution_")
+ProblemId_ = TypeVar("ProblemId_")
+logger = logging.getLogger("blackops_legacy.solver")
 
 
 class SolverStatus(Enum):
@@ -27,22 +29,22 @@ class SolverStatus(Enum):
     `SolverJob.get_solver_status`.
     """
 
-    NOT_SOLVING = 'NOT_SOLVING'
+    NOT_SOLVING = "NOT_SOLVING"
     """
     The problem's solving has terminated or the problem was never submitted to the `SolverManager`.
     `SolverManager.get_solver_status` cannot tell the difference, but `SolverJob.get_solver_status` can.
     """
 
-    SOLVING_SCHEDULED = 'SOLVING_SCHEDULED'
+    SOLVING_SCHEDULED = "SOLVING_SCHEDULED"
     """
     No solver thread started solving this problem yet, but sooner or later a solver thread will solve it.
     For example, submitting 7 problems to a `SolverManager` with a `SolverManagerConfig.parallel_solver_count` of 4,
     puts 3 into this state for non-trivial amount of time.
-    
+
     Transitions into `SOLVING_ACTIVE` (or `NOT_SOLVING` if it is terminated early, before it starts).
     """
 
-    SOLVING_ACTIVE = 'SOLVING_ACTIVE'
+    SOLVING_ACTIVE = "SOLVING_ACTIVE"
     """
     A solver thread started solving the problem, but hasn't finished yet.
     If CPU resource are scarce and that solver thread is waiting for CPU time,
@@ -59,9 +61,10 @@ class SolverJob(Generic[Solution_, ProblemId_]):
     """
     Represents a problem that has been submitted to solve on the SolverManager.
     """
-    _delegate: '_JavaSolverJob'
 
-    def __init__(self, delegate: '_JavaSolverJob'):
+    _delegate: "_JavaSolverJob"
+
+    def __init__(self, delegate: "_JavaSolverJob"):
         self._delegate = delegate
 
     def get_problem_id(self) -> ProblemId_:
@@ -75,6 +78,7 @@ class SolverJob(Generic[Solution_, ProblemId_]):
             The problem id corresponding to this `SolverJob`.
         """
         from _jpyinterpreter import unwrap_python_like_object
+
         return unwrap_python_like_object(self._delegate.getProblemId())
 
     def get_solver_status(self) -> SolverStatus:
@@ -113,6 +117,7 @@ class SolverJob(Generic[Solution_, ProblemId_]):
             Never ``None``, but it could be the original uninitialized problem.
         """
         from _jpyinterpreter import unwrap_python_like_object
+
         return unwrap_python_like_object(self._delegate.getFinalBestSolution())
 
     def terminate_early(self) -> None:
@@ -139,7 +144,9 @@ class SolverJob(Generic[Solution_, ProblemId_]):
         """
         return self._delegate.isTerminatedEarly()
 
-    def add_problem_change(self, problem_change: ProblemChange[Solution_]) -> Awaitable[None]:
+    def add_problem_change(
+        self, problem_change: ProblemChange[Solution_]
+    ) -> Awaitable[None]:
         """
         Schedules a `ProblemChange` to be processed by the underlying `Solver` and returns immediately.
         To learn more about problem change semantics, please refer to the `ProblemChange` docstring.
@@ -154,7 +161,9 @@ class SolverJob(Generic[Solution_, ProblemId_]):
         Awaitable
             An awaitable that completes after the best solution containing this change has been consumed.
         """
-        return wrap_future(self._delegate.addProblemChange(ProblemChangeWrapper(problem_change)))
+        return wrap_future(
+            self._delegate.addProblemChange(ProblemChangeWrapper(problem_change))
+        )
 
 
 def default_exception_handler(problem_id, error):
@@ -164,7 +173,7 @@ def default_exception_handler(problem_id, error):
         # logger does not have a method for printing a message with exception info,
         # so we need to raise the unwrapped recorded error to include the traceback
         # in the logs
-        logger.exception(f'Solving failed for problem_id ({problem_id}).')
+        logger.exception(f"Solving failed for problem_id ({problem_id}).")
         raise
 
 
@@ -181,12 +190,13 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
 
     Then solve it by calling `run`.
     """
-    _delegate: '_JavaSolverJobBuilder'
 
-    def __init__(self, delegate: '_JavaSolverJobBuilder'):
+    _delegate: "_JavaSolverJobBuilder"
+
+    def __init__(self, delegate: "_JavaSolverJobBuilder"):
         self._delegate = delegate
 
-    def with_problem_id(self, problem_id: ProblemId_) -> 'SolverJobBuilder':
+    def with_problem_id(self, problem_id: ProblemId_) -> "SolverJobBuilder":
         """
         Sets the problem id.
 
@@ -201,9 +211,12 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
             This `SolverJobBuilder`.
         """
         from _jpyinterpreter import convert_to_java_python_like_object
-        return SolverJobBuilder(self._delegate.withProblemId(convert_to_java_python_like_object(problem_id)))
 
-    def with_problem(self, problem: Solution_) -> 'SolverJobBuilder':
+        return SolverJobBuilder(
+            self._delegate.withProblemId(convert_to_java_python_like_object(problem_id))
+        )
+
+    def with_problem(self, problem: Solution_) -> "SolverJobBuilder":
         """
         Sets the problem definition.
 
@@ -218,9 +231,14 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
             This `SolverJobBuilder`.
         """
         from _jpyinterpreter import convert_to_java_python_like_object
-        return SolverJobBuilder(self._delegate.withProblem(convert_to_java_python_like_object(problem)))
 
-    def with_config_override(self, config_override: SolverConfigOverride) -> 'SolverJobBuilder':
+        return SolverJobBuilder(
+            self._delegate.withProblem(convert_to_java_python_like_object(problem))
+        )
+
+    def with_config_override(
+        self, config_override: SolverConfigOverride
+    ) -> "SolverJobBuilder":
         """
         Sets the solver config override.
 
@@ -234,9 +252,15 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         SolverJobBuilder
             This `SolverJobBuilder`.
         """
-        return SolverJobBuilder(self._delegate.withConfigOverride(config_override._to_java_solver_config_override()))
+        return SolverJobBuilder(
+            self._delegate.withConfigOverride(
+                config_override._to_java_solver_config_override()
+            )
+        )
 
-    def with_problem_finder(self, problem_finder: Callable[[ProblemId_], Solution_]) -> 'SolverJobBuilder':
+    def with_problem_finder(
+        self, problem_finder: Callable[[ProblemId_], Solution_]
+    ) -> "SolverJobBuilder":
         """
         Sets the mapping function to the problem definition.
 
@@ -251,12 +275,21 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
             This `SolverJobBuilder`.
         """
         from java.util.function import Function
-        from _jpyinterpreter import convert_to_java_python_like_object, unwrap_python_like_object
-        java_finder = Function @ (lambda problem_id: convert_to_java_python_like_object(
-            problem_finder(unwrap_python_like_object(problem_id))))
+        from _jpyinterpreter import (
+            convert_to_java_python_like_object,
+            unwrap_python_like_object,
+        )
+
+        java_finder = Function @ (
+            lambda problem_id: convert_to_java_python_like_object(
+                problem_finder(unwrap_python_like_object(problem_id))
+            )
+        )
         return SolverJobBuilder(self._delegate.withProblemFinder(java_finder))
 
-    def with_best_solution_consumer(self, best_solution_consumer: Callable[[Solution_], None]) -> 'SolverJobBuilder':
+    def with_best_solution_consumer(
+        self, best_solution_consumer: Callable[[Solution_], None]
+    ) -> "SolverJobBuilder":
         """
         Sets the best solution consumer, which may be called multiple times during the solving process.
 
@@ -273,10 +306,14 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         from java.util.function import Consumer
         from _jpyinterpreter import unwrap_python_like_object
 
-        java_consumer = Consumer @ (lambda solution: best_solution_consumer(unwrap_python_like_object(solution)))
+        java_consumer = Consumer @ (
+            lambda solution: best_solution_consumer(unwrap_python_like_object(solution))
+        )
         return SolverJobBuilder(self._delegate.withBestSolutionConsumer(java_consumer))
 
-    def with_final_best_solution_consumer(self, final_best_solution_consumer: Callable[[Solution_], None]) -> 'SolverJobBuilder':
+    def with_final_best_solution_consumer(
+        self, final_best_solution_consumer: Callable[[Solution_], None]
+    ) -> "SolverJobBuilder":
         """
         Sets the final best solution consumer,
         which is called at the end of the solving process and returns the final best solution.
@@ -294,11 +331,18 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         from java.util.function import Consumer
         from _jpyinterpreter import unwrap_python_like_object
 
-        java_consumer = Consumer @ (lambda solution: final_best_solution_consumer(unwrap_python_like_object(solution)))
+        java_consumer = Consumer @ (
+            lambda solution: final_best_solution_consumer(
+                unwrap_python_like_object(solution)
+            )
+        )
         return SolverJobBuilder(
-            self._delegate.withFinalBestSolutionConsumer(java_consumer))
+            self._delegate.withFinalBestSolutionConsumer(java_consumer)
+        )
 
-    def with_first_initialized_solution_consumer(self, first_initialized_solution_consumer: Callable[[Solution_], None]) -> 'SolverJobBuilder':
+    def with_first_initialized_solution_consumer(
+        self, first_initialized_solution_consumer: Callable[[Solution_], None]
+    ) -> "SolverJobBuilder":
         """
         Sets the consumer of the first initialized solution. First initialized solution is the solution at the end of
         the last phase that immediately precedes the first local search phase. This solution marks the beginning of
@@ -317,11 +361,18 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         from java.util.function import Consumer
         from _jpyinterpreter import unwrap_python_like_object
 
-        java_consumer = Consumer @ (lambda solution: first_initialized_solution_consumer(unwrap_python_like_object(solution)))
+        java_consumer = Consumer @ (
+            lambda solution: first_initialized_solution_consumer(
+                unwrap_python_like_object(solution)
+            )
+        )
         return SolverJobBuilder(
-            self._delegate.withFirstInitializedSolutionConsumer(java_consumer))
+            self._delegate.withFirstInitializedSolutionConsumer(java_consumer)
+        )
 
-    def with_solver_job_started_consumer(self, solver_job_started_consumer: Callable[[Solution_], None]) -> 'SolverJobBuilder':
+    def with_solver_job_started_consumer(
+        self, solver_job_started_consumer: Callable[[Solution_], None]
+    ) -> "SolverJobBuilder":
         """
         Sets the consumer for when the solver starts its solving process.
 
@@ -338,11 +389,18 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         from java.util.function import Consumer
         from _jpyinterpreter import unwrap_python_like_object
 
-        java_consumer = Consumer @ (lambda solution: solver_job_started_consumer(unwrap_python_like_object(solution)))
+        java_consumer = Consumer @ (
+            lambda solution: solver_job_started_consumer(
+                unwrap_python_like_object(solution)
+            )
+        )
         return SolverJobBuilder(
-            self._delegate.withSolverJobStartedConsumer(java_consumer))
+            self._delegate.withSolverJobStartedConsumer(java_consumer)
+        )
 
-    def with_exception_handler(self, exception_handler: Callable[[ProblemId_, Exception], None]) -> 'SolverJobBuilder':
+    def with_exception_handler(
+        self, exception_handler: Callable[[ProblemId_, Exception], None]
+    ) -> "SolverJobBuilder":
         """
         Sets the custom exception handler.
 
@@ -360,10 +418,12 @@ class SolverJobBuilder(Generic[Solution_, ProblemId_]):
         from java.util.function import BiConsumer
         from _jpyinterpreter import unwrap_python_like_object
 
-        java_consumer = BiConsumer @ (lambda problem_id, error: exception_handler(unwrap_python_like_object(problem_id),
-                                                                                  unwrap_python_like_object(error)))
-        return SolverJobBuilder(
-            self._delegate.withExceptionHandler(java_consumer))
+        java_consumer = BiConsumer @ (
+            lambda problem_id, error: exception_handler(
+                unwrap_python_like_object(problem_id), unwrap_python_like_object(error)
+            )
+        )
+        return SolverJobBuilder(self._delegate.withExceptionHandler(java_consumer))
 
     def run(self) -> SolverJob[Solution_, ProblemId_]:
         """
@@ -393,14 +453,17 @@ class SolverManager(Generic[Solution_, ProblemId_]):
 
     To learn more about problem change semantics, please refer to the `ProblemChange` Javadoc.
     """
-    _delegate: '_JavaSolverManager'
 
-    def __init__(self, delegate: '_JavaSolverManager'):
+    _delegate: "_JavaSolverManager"
+
+    def __init__(self, delegate: "_JavaSolverManager"):
         self._delegate = delegate
 
     @staticmethod
-    def create(solver_factory_or_config: 'SolverConfig | SolverFactory[Solution_]',
-               solver_manager_config: 'SolverManagerConfig' = None) -> 'SolverManager[Solution_, ProblemId_]':
+    def create(
+        solver_factory_or_config: "SolverConfig | SolverFactory[Solution_]",
+        solver_manager_config: "SolverManagerConfig" = None,
+    ) -> "SolverManager[Solution_, ProblemId_]":
         """
         Use a `SolverConfig` or `SolverFactory` to build a `SolverManager`.
 
@@ -417,23 +480,34 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         SolverManager
             A new `SolverManager` instance.
         """
-        from ai.timefold.solver.core.api.solver import SolverManager as JavaSolverManager
+        from ai.timefold.solver.core.api.solver import (
+            SolverManager as JavaSolverManager,
+        )
         from ai.timefold.solver.python import DaemonThreadFactory
 
         if solver_manager_config is None:
             solver_manager_config = SolverManagerConfig()
 
-        java_solver_manager_config = solver_manager_config._to_java_solver_manager_config()  # noqa
+        java_solver_manager_config = (
+            solver_manager_config._to_java_solver_manager_config()
+        )  # noqa
         java_solver_manager_config.setThreadFactoryClass(DaemonThreadFactory.class_)
 
         if isinstance(solver_factory_or_config, SolverConfig):
             solver_factory_or_config = SolverFactory.create(solver_factory_or_config)
 
-        return SolverManager(JavaSolverManager.create(solver_factory_or_config._delegate,  # noqa
-                                                      java_solver_manager_config))
+        return SolverManager(
+            JavaSolverManager.create(
+                solver_factory_or_config._delegate, java_solver_manager_config  # noqa
+            )
+        )
 
-    def solve(self, problem_id: ProblemId_, problem: Solution_,
-              final_best_solution_listener: Callable[[Solution_], None] = None) -> SolverJob[Solution_, ProblemId_]:
+    def solve(
+        self,
+        problem_id: ProblemId_,
+        problem: Solution_,
+        final_best_solution_listener: Callable[[Solution_], None] = None,
+    ) -> SolverJob[Solution_, ProblemId_]:
         """
         Submits a planning problem to solve and returns immediately.
         The planning problem is solved on a solver Thread, as soon as one is available.
@@ -465,17 +539,21 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         SolverJob
             A new `SolverJob`.
         """
-        builder = (self.solve_builder()
-                   .with_problem_id(problem_id)
-                   .with_problem(problem))
+        builder = self.solve_builder().with_problem_id(problem_id).with_problem(problem)
 
         if final_best_solution_listener is not None:
-            builder = builder.with_final_best_solution_consumer(final_best_solution_listener)
+            builder = builder.with_final_best_solution_consumer(
+                final_best_solution_listener
+            )
 
         return builder.run()
 
-    def solve_and_listen(self, problem_id: ProblemId_, problem: Solution_, listener: Callable[[Solution_], None]) \
-            -> SolverJob[Solution_, ProblemId_]:
+    def solve_and_listen(
+        self,
+        problem_id: ProblemId_,
+        problem: Solution_,
+        listener: Callable[[Solution_], None],
+    ) -> SolverJob[Solution_, ProblemId_]:
         """
         Submits a planning problem to solve and returns immediately.
         The planning problem is solved on a solver thread, as soon as one is available.
@@ -506,11 +584,13 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         SolverJob
             A new `SolverJob`.
         """
-        return (self.solve_builder()
-                .with_problem_id(problem_id)
-                .with_problem(problem)
-                .with_best_solution_consumer(listener)
-                .run())
+        return (
+            self.solve_builder()
+            .with_problem_id(problem_id)
+            .with_problem(problem)
+            .with_best_solution_consumer(listener)
+            .run()
+        )
 
     def solve_builder(self) -> SolverJobBuilder[Solution_, ProblemId_]:
         """
@@ -521,7 +601,9 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         SolverJobBuilder
             A new `SolverJobBuilder`.
         """
-        return SolverJobBuilder(self._delegate.solveBuilder()).with_exception_handler(default_exception_handler)
+        return SolverJobBuilder(self._delegate.solveBuilder()).with_exception_handler(
+            default_exception_handler
+        )
 
     def get_solver_status(self, problem_id: ProblemId_) -> SolverStatus:
         """
@@ -542,8 +624,12 @@ class SolverManager(Generic[Solution_, ProblemId_]):
             The `SolverStatus` corresponding to `problem_id`.
         """
         from _jpyinterpreter import convert_to_java_python_like_object
-        return SolverStatus._from_java_enum(self._delegate.getSolverStatus(
-            convert_to_java_python_like_object(problem_id)))
+
+        return SolverStatus._from_java_enum(
+            self._delegate.getSolverStatus(
+                convert_to_java_python_like_object(problem_id)
+            )
+        )
 
     def terminate_early(self, problem_id: ProblemId_) -> None:
         """
@@ -565,9 +651,12 @@ class SolverManager(Generic[Solution_, ProblemId_]):
             `SolverJobBuilder.with_problem_id`.
         """
         from _jpyinterpreter import convert_to_java_python_like_object
+
         self._delegate.terminateEarly(convert_to_java_python_like_object(problem_id))
 
-    def add_problem_change(self, problem_id: ProblemId_, problem_change: ProblemChange[Solution_]) -> Awaitable[None]:
+    def add_problem_change(
+        self, problem_id: ProblemId_, problem_change: ProblemChange[Solution_]
+    ) -> Awaitable[None]:
         """
         Schedules a `ProblemChange` to be processed by the underlying `Solver` and returns immediately.
         If the solver already terminated or the `problem_id` was never added, throws an exception.
@@ -587,8 +676,13 @@ class SolverManager(Generic[Solution_, ProblemId_]):
             An awaitable that completes after the best solution containing this change has been consumed.
         """
         from _jpyinterpreter import convert_to_java_python_like_object
-        return wrap_future(self._delegate.addProblemChange(convert_to_java_python_like_object(problem_id),
-                                                                       ProblemChangeWrapper(problem_change)))
+
+        return wrap_future(
+            self._delegate.addProblemChange(
+                convert_to_java_python_like_object(problem_id),
+                ProblemChangeWrapper(problem_change),
+            )
+        )
 
     def close(self) -> None:
         """
@@ -600,7 +694,7 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         """
         self._delegate.close()
 
-    def __enter__(self) -> 'SolverManager[Solution_, ProblemId_]':
+    def __enter__(self) -> "SolverManager[Solution_, ProblemId_]":
         """
         Returns self, so it can be used as a context manager.
 
@@ -618,4 +712,4 @@ class SolverManager(Generic[Solution_, ProblemId_]):
         self._delegate.close()
 
 
-__all__ = ['SolverManager', 'SolverJobBuilder', 'SolverJob', 'SolverStatus']
+__all__ = ["SolverManager", "SolverJobBuilder", "SolverJob", "SolverStatus"]

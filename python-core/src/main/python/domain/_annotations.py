@@ -4,10 +4,11 @@ from jpype import JImplements, JOverride, JClass
 from typing import Union, List, Callable, Type, TypeVar, overload
 
 from ._variable_listener import VariableListener
-from .._timefold_java_interop import ensure_init
+from .._blackops_java_interop import ensure_init
 
-Solution_ = TypeVar('Solution_')
-Entity_ = TypeVar('Entity_')
+Solution_ = TypeVar("Solution_")
+Entity_ = TypeVar("Entity_")
+
 
 class PlanningId(JavaAnnotation):
     """
@@ -22,7 +23,7 @@ class PlanningId(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningId
+    >>> from blackops_legacy.solver.domain import PlanningId
     >>> from typing import Annotated
     >>>
     >>> class Room:
@@ -32,9 +33,13 @@ class PlanningId(JavaAnnotation):
     --------
     planning_entity
     """
+
     def __init__(self):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.lookup import PlanningId as JavaPlanningId
+        from ai.timefold.solver.core.api.domain.lookup import (
+            PlanningId as JavaPlanningId,
+        )
+
         super().__init__(JavaPlanningId, {})
 
 
@@ -52,7 +57,7 @@ class PlanningPin(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningPin, planning_entity
+    >>> from blackops_legacy.solver.domain import PlanningPin, planning_entity
     >>> from typing import Annotated
     >>>
     >>> @planning_entity
@@ -66,8 +71,11 @@ class PlanningPin(JavaAnnotation):
 
     def __init__(self):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.entity import PlanningPin as JavaPlanningPin
+        from ai.timefold.solver.core.api.domain.entity import (
+            PlanningPin as JavaPlanningPin,
+        )
         from jpype import JBoolean
+
         super().__init__(JavaPlanningPin, {}, field_type_override=JBoolean)
 
 
@@ -113,7 +121,7 @@ class PlanningPinToIndex(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningPinToIndex, planning_entity
+    >>> from blackops_legacy.solver.domain import PlanningPinToIndex, planning_entity
     >>> from typing import Annotated
     >>>
     >>> @planning_entity
@@ -127,18 +135,25 @@ class PlanningPinToIndex(JavaAnnotation):
 
     def __init__(self):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.entity import PlanningPinToIndex as JavaPlanningPinToIndex
+        from ai.timefold.solver.core.api.domain.entity import (
+            PlanningPinToIndex as JavaPlanningPinToIndex,
+        )
         from jpype import JInt
+
         super().__init__(JavaPlanningPinToIndex, {}, field_type_override=JInt)
 
 
 class PlanningVariableGraphType(Enum):
-    CHAINED = 'CHAINED'
-    NONE = 'NONE'
+    CHAINED = "CHAINED"
+    NONE = "NONE"
 
     def _to_java_value(self):
-        return getattr(JClass('ai.timefold.solver.core.api.domain.variable.PlanningVariableGraphType'),
-                       self.name)
+        return getattr(
+            JClass(
+                "ai.timefold.solver.core.api.domain.variable.PlanningVariableGraphType"
+            ),
+            self.name,
+        )
 
 
 class PlanningVariable(JavaAnnotation):
@@ -148,7 +163,7 @@ class PlanningVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import PlanningVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import Room, Timeslot
     >>>
@@ -158,18 +173,27 @@ class PlanningVariable(JavaAnnotation):
     ...     room: Annotated[Room, PlanningVariable]
     ...     timeslot: Annotated[Timeslot, PlanningVariable]
     """
-    def __init__(self, *,
-                 value_range_provider_refs: List[str] = None,
-                 allows_unassigned: bool = False,
-                 graph_type: PlanningVariableGraphType = PlanningVariableGraphType.NONE):
+
+    def __init__(
+        self,
+        *,
+        value_range_provider_refs: List[str] = None,
+        allows_unassigned: bool = False,
+        graph_type: PlanningVariableGraphType = PlanningVariableGraphType.NONE
+    ):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.variable import PlanningVariable as JavaPlanningVariable
-        super().__init__(JavaPlanningVariable,
-                         {
-                             'valueRangeProviderRefs': value_range_provider_refs,
-                             'graphType': graph_type._to_java_value(),
-                             'allowsUnassigned': allows_unassigned
-                         })
+        from ai.timefold.solver.core.api.domain.variable import (
+            PlanningVariable as JavaPlanningVariable,
+        )
+
+        super().__init__(
+            JavaPlanningVariable,
+            {
+                "valueRangeProviderRefs": value_range_provider_refs,
+                "graphType": graph_type._to_java_value(),
+                "allowsUnassigned": allows_unassigned,
+            },
+        )
 
 
 class PlanningListVariable(JavaAnnotation):
@@ -201,7 +225,7 @@ class PlanningListVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningListVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import PlanningListVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import Visit
     >>>
@@ -214,16 +238,25 @@ class PlanningListVariable(JavaAnnotation):
     PlanningPin
     PlanningPinToIndex
     """
-    def __init__(self, *,
-                 value_range_provider_refs: List[str] = None,
-                 allows_unassigned_values: bool = False):
+
+    def __init__(
+        self,
+        *,
+        value_range_provider_refs: List[str] = None,
+        allows_unassigned_values: bool = False
+    ):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.variable import PlanningListVariable as JavaPlanningListVariable
-        super().__init__(JavaPlanningListVariable,
-                         {
-                             'valueRangeProviderRefs': value_range_provider_refs,
-                             'allowsUnassignedValues': allows_unassigned_values
-                         })
+        from ai.timefold.solver.core.api.domain.variable import (
+            PlanningListVariable as JavaPlanningListVariable,
+        )
+
+        super().__init__(
+            JavaPlanningListVariable,
+            {
+                "valueRangeProviderRefs": value_range_provider_refs,
+                "allowsUnassignedValues": allows_unassigned_values,
+            },
+        )
 
 
 class ShadowVariable(JavaAnnotation):
@@ -234,7 +267,7 @@ class ShadowVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import ShadowVariable, PreviousElementShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import ShadowVariable, PreviousElementShadowVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import ArrivalTimeVariableListener
     >>> from datetime import datetime
@@ -254,20 +287,30 @@ class ShadowVariable(JavaAnnotation):
     VariableListener
     PiggybackShadowVariable
     """
-    def __init__(self, *,
-                 variable_listener_class: Type[VariableListener],
-                 source_variable_name: str,
-                 source_entity_class: Type = None):
+
+    def __init__(
+        self,
+        *,
+        variable_listener_class: Type[VariableListener],
+        source_variable_name: str,
+        source_entity_class: Type = None
+    ):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
-        from ai.timefold.solver.core.api.domain.variable import ShadowVariable as JavaShadowVariable
+        from ai.timefold.solver.core.api.domain.variable import (
+            ShadowVariable as JavaShadowVariable,
+        )
 
-        super().__init__(JavaShadowVariable,
-                         {
-                             'variableListenerClass': variable_listener_class,
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name),
-                             'sourceEntityClass': source_entity_class,
-                         })
+        super().__init__(
+            JavaShadowVariable,
+            {
+                "variableListenerClass": variable_listener_class,
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                ),
+                "sourceEntityClass": source_entity_class,
+            },
+        )
 
 
 class PiggybackShadowVariable(JavaAnnotation):
@@ -278,7 +321,7 @@ class PiggybackShadowVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import ShadowVariable, PreviousElementShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import ShadowVariable, PreviousElementShadowVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import ArrivalTimeVariableListener
     >>> from datetime import datetime
@@ -298,18 +341,23 @@ class PiggybackShadowVariable(JavaAnnotation):
     --------
     VariableListener
     """
-    def __init__(self, *,
-                 shadow_variable_name: str,
-                 shadow_entity_class: Type = None):
+
+    def __init__(self, *, shadow_variable_name: str, shadow_entity_class: Type = None):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
         from ai.timefold.solver.core.api.domain.variable import (
-            PiggybackShadowVariable as JavaPiggybackShadowVariable)
-        super().__init__(JavaPiggybackShadowVariable,
-                         {
-                             'shadowVariableName': PythonClassTranslator.getJavaFieldName(shadow_variable_name),
-                             'shadowEntityClass': shadow_entity_class,
-                         })
+            PiggybackShadowVariable as JavaPiggybackShadowVariable,
+        )
+
+        super().__init__(
+            JavaPiggybackShadowVariable,
+            {
+                "shadowVariableName": PythonClassTranslator.getJavaFieldName(
+                    shadow_variable_name
+                ),
+                "shadowEntityClass": shadow_entity_class,
+            },
+        )
 
 
 class CascadingUpdateShadowVariable(JavaAnnotation):
@@ -330,7 +378,7 @@ class CascadingUpdateShadowVariable(JavaAnnotation):
     Examples
     --------
 
-    >>> from timefold.solver.domain import CascadingUpdateShadowVariable, PreviousElementShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import CascadingUpdateShadowVariable, PreviousElementShadowVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import ArrivalTimeVariableListener
     >>> from datetime import datetime, timedelta
@@ -348,17 +396,21 @@ class CascadingUpdateShadowVariable(JavaAnnotation):
     ...         self.arrival_time = previous.arrival_time + timedelta(hours=1)
     """
 
-    def __init__(self, *,
-                 target_method_name: str):
+    def __init__(self, *, target_method_name: str):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
-        from ai.timefold.solver.core.api.domain.variable import \
-            CascadingUpdateShadowVariable as JavaCascadingUpdateShadowVariable
+        from ai.timefold.solver.core.api.domain.variable import (
+            CascadingUpdateShadowVariable as JavaCascadingUpdateShadowVariable,
+        )
 
-        super().__init__(JavaCascadingUpdateShadowVariable,
-                         {
-                             'targetMethodName': PythonClassTranslator.getJavaMethodName(target_method_name),
-                         })
+        super().__init__(
+            JavaCascadingUpdateShadowVariable,
+            {
+                "targetMethodName": PythonClassTranslator.getJavaMethodName(
+                    target_method_name
+                ),
+            },
+        )
 
 
 class IndexShadowVariable(JavaAnnotation):
@@ -369,23 +421,29 @@ class IndexShadowVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import IndexShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import IndexShadowVariable, planning_entity
     >>> from typing import Annotated
     >>>
     >>> @planning_entity
     ... class Visit:
     ...     visit_index: Annotated[int, IndexShadowVariable]
     """
-    def __init__(self, *,
-                 source_variable_name: str):
+
+    def __init__(self, *, source_variable_name: str):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
         from ai.timefold.solver.core.api.domain.variable import (
-            IndexShadowVariable as JavaIndexShadowVariable)
-        super().__init__(JavaIndexShadowVariable,
-                         {
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name)
-                         })
+            IndexShadowVariable as JavaIndexShadowVariable,
+        )
+
+        super().__init__(
+            JavaIndexShadowVariable,
+            {
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                )
+            },
+        )
 
 
 class PreviousElementShadowVariable(JavaAnnotation):
@@ -398,23 +456,29 @@ class PreviousElementShadowVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PreviousElementShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import PreviousElementShadowVariable, planning_entity
     >>> from typing import Annotated
     >>>
     >>> @planning_entity
     >>> class Visit:
     ...     previous: Annotated['Visit', PreviousElementShadowVariable]
     """
-    def __init__(self, *,
-                 source_variable_name: str):
+
+    def __init__(self, *, source_variable_name: str):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
         from ai.timefold.solver.core.api.domain.variable import (
-            PreviousElementShadowVariable as JavaPreviousElementShadowVariable)
-        super().__init__(JavaPreviousElementShadowVariable,
-                         {
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name)
-                         })
+            PreviousElementShadowVariable as JavaPreviousElementShadowVariable,
+        )
+
+        super().__init__(
+            JavaPreviousElementShadowVariable,
+            {
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                )
+            },
+        )
 
 
 class NextElementShadowVariable(JavaAnnotation):
@@ -425,16 +489,22 @@ class NextElementShadowVariable(JavaAnnotation):
     It is specified on an attribute of a `planning_entity` class.
     The source variable must be a list variable.
     """
-    def __init__(self, *,
-                 source_variable_name: str):
+
+    def __init__(self, *, source_variable_name: str):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
         from ai.timefold.solver.core.api.domain.variable import (
-            NextElementShadowVariable as JavaNextElementShadowVariable)
-        super().__init__(JavaNextElementShadowVariable,
-                         {
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name)
-                         })
+            NextElementShadowVariable as JavaNextElementShadowVariable,
+        )
+
+        super().__init__(
+            JavaNextElementShadowVariable,
+            {
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                )
+            },
+        )
 
 
 class AnchorShadowVariable(JavaAnnotation):
@@ -443,16 +513,22 @@ class AnchorShadowVariable(JavaAnnotation):
     which implies it's a shadow variable.
     It is specified on an attribute of a `planning_entity` class.
     """
-    def __init__(self, *,
-                 source_variable_name: str):
+
+    def __init__(self, *, source_variable_name: str):
         ensure_init()
         from ai.timefold.jpyinterpreter import PythonClassTranslator
         from ai.timefold.solver.core.api.domain.variable import (
-            AnchorShadowVariable as JavaAnchorShadowVariable)
-        super().__init__(JavaAnchorShadowVariable,
-                         {
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name)
-                         })
+            AnchorShadowVariable as JavaAnchorShadowVariable,
+        )
+
+        super().__init__(
+            JavaAnchorShadowVariable,
+            {
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                )
+            },
+        )
 
 
 class InverseRelationShadowVariable(JavaAnnotation):
@@ -463,7 +539,7 @@ class InverseRelationShadowVariable(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import InverseRelationShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import InverseRelationShadowVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import Vehicle
     >>>
@@ -471,30 +547,36 @@ class InverseRelationShadowVariable(JavaAnnotation):
     >>> class Visit:
     ...     vehicle: Annotated[Vehicle, InverseRelationShadowVariable(source_variable_name='visits')]
     """
-    def __init__(self, *,
-                 source_variable_name: str):
+
+    def __init__(self, *, source_variable_name: str):
         ensure_init()
         from ai.timefold.solver.core.api.domain.variable import (
-            InverseRelationShadowVariable as JavaInverseRelationShadowVariable)
+            InverseRelationShadowVariable as JavaInverseRelationShadowVariable,
+        )
         from ai.timefold.jpyinterpreter import PythonClassTranslator
-        super().__init__(JavaInverseRelationShadowVariable,
-                         {
-                             'sourceVariableName': PythonClassTranslator.getJavaFieldName(source_variable_name)
-                         })
+
+        super().__init__(
+            JavaInverseRelationShadowVariable,
+            {
+                "sourceVariableName": PythonClassTranslator.getJavaFieldName(
+                    source_variable_name
+                )
+            },
+        )
 
 
 class ProblemFactProperty(JavaAnnotation):
     """
     Specifies that an attribute on a `planning_solution` class is a problem fact.
     A problem fact must not change during solving (except through a `ProblemChange` event).
-    The constraints in a `timefold.solver.score.ConstraintProvider` rely on problem facts for
-    `timefold.solver.score.ConstraintFactory.for_each`.
+    The constraints in a `blackops_legacy.solver.score.ConstraintProvider` rely on problem facts for
+    `blackops_legacy.solver.score.ConstraintFactory.for_each`.
     Do not annotate a planning entity or a planning paramerization as a problem fact:
-    they are automatically available as facts for `timefold.solver.score.ConstraintFactory.for_each`.
+    they are automatically available as facts for `blackops_legacy.solver.score.ConstraintFactory.for_each`.
 
     Examples
     --------
-    >>> from timefold.solver.domain import ProblemFactProperty, planning_solution
+    >>> from blackops_legacy.solver.domain import ProblemFactProperty, planning_solution
     >>> from typing import Annotated
     >>> from domain import School
     >>>
@@ -507,10 +589,13 @@ class ProblemFactProperty(JavaAnnotation):
     --------
     ProblemFactCollectionProperty
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution import (
-            ProblemFactProperty as JavaProblemFactProperty)
+            ProblemFactProperty as JavaProblemFactProperty,
+        )
+
         super().__init__(JavaProblemFactProperty, {})
 
 
@@ -518,14 +603,14 @@ class ProblemFactCollectionProperty(JavaAnnotation):
     """
     Specifies that an attribute on a `planning_solution` class is a collection of problem facts.
     A problem fact must not change during solving (except through a `ProblemChange` event).
-    The constraints in a `timefold.solver.score.ConstraintProvider` rely on problem facts for
-    `timefold.solver.score.ConstraintFactory.for_each`.
+    The constraints in a `blackops_legacy.solver.score.ConstraintProvider` rely on problem facts for
+    `blackops_legacy.solver.score.ConstraintFactory.for_each`.
     Do not annotate a planning entity or a planning paramerization as a problem fact:
-    they are automatically available as facts for `timefold.solver.score.ConstraintFactory.for_each`.
+    they are automatically available as facts for `blackops_legacy.solver.score.ConstraintFactory.for_each`.
 
     Examples
     --------
-    >>> from timefold.solver.domain import ProblemFactCollectionProperty, planning_solution
+    >>> from blackops_legacy.solver.domain import ProblemFactCollectionProperty, planning_solution
     >>> from typing import Annotated
     >>> from domain import School
     >>>
@@ -538,10 +623,13 @@ class ProblemFactCollectionProperty(JavaAnnotation):
     --------
     ProblemFactProperty
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution import (
-            ProblemFactCollectionProperty as JavaProblemFactCollectionProperty)
+            ProblemFactCollectionProperty as JavaProblemFactCollectionProperty,
+        )
+
         super().__init__(JavaProblemFactCollectionProperty, {})
 
 
@@ -553,7 +641,7 @@ class PlanningEntityProperty(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningEntityProperty, planning_solution
+    >>> from blackops_legacy.solver.domain import PlanningEntityProperty, planning_solution
     >>> from typing import Annotated
     >>> from domain import Lesson
     >>>
@@ -562,10 +650,13 @@ class PlanningEntityProperty(JavaAnnotation):
     ...     lesson: Annotated[Lesson, PlanningEntityProperty]
     ...     # ...
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution import (
-            PlanningEntityProperty as JavaPlanningEntityProperty)
+            PlanningEntityProperty as JavaPlanningEntityProperty,
+        )
+
         super().__init__(JavaPlanningEntityProperty, {})
 
 
@@ -577,7 +668,7 @@ class PlanningEntityCollectionProperty(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningEntityCollectionProperty, planning_solution
+    >>> from blackops_legacy.solver.domain import PlanningEntityCollectionProperty, planning_solution
     >>> from typing import Annotated
     >>> from domain import Lesson
     >>>
@@ -586,10 +677,13 @@ class PlanningEntityCollectionProperty(JavaAnnotation):
     ...     lessons: Annotated[list[Lesson], PlanningEntityCollectionProperty]
     ...     # ...
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution import (
-            PlanningEntityCollectionProperty as JavaPlanningEntityCollectionProperty)
+            PlanningEntityCollectionProperty as JavaPlanningEntityCollectionProperty,
+        )
+
         super().__init__(JavaPlanningEntityCollectionProperty, {})
 
 
@@ -601,7 +695,7 @@ class ValueRangeProvider(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import ProblemFactCollectionProperty, ValueRangeProvider, planning_solution
+    >>> from blackops_legacy.solver.domain import ProblemFactCollectionProperty, ValueRangeProvider, planning_solution
     >>> from typing import Annotated
     >>> from domain import Room
     >>>
@@ -610,13 +704,14 @@ class ValueRangeProvider(JavaAnnotation):
     ...     rooms: Annotated[list[Room], ProblemFactCollectionProperty, ValueRangeProvider]
     ...     # ...
     """
+
     def __init__(self, *, id: str = None):
         ensure_init()
         from ai.timefold.solver.core.api.domain.valuerange import (
-            ValueRangeProvider as JavaValueRangeProvider)
-        super().__init__(JavaValueRangeProvider, {
-            'id': id
-        })
+            ValueRangeProvider as JavaValueRangeProvider,
+        )
+
+        super().__init__(JavaValueRangeProvider, {"id": id})
 
 
 class PlanningScore(JavaAnnotation):
@@ -628,8 +723,8 @@ class PlanningScore(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningScore, planning_solution
-    >>> from timefold.solver.score import HardSoftScore
+    >>> from blackops_legacy.solver.domain import PlanningScore, planning_solution
+    >>> from blackops_legacy.solver.score import HardSoftScore
     >>> from typing import Annotated
     >>>
     >>> @planning_solution
@@ -637,17 +732,25 @@ class PlanningScore(JavaAnnotation):
     ...     score: Annotated[HardSoftScore, PlanningScore]
     ...     # ...
     """
-    def __init__(self, *,
-                 bendable_hard_levels_size: int = None,
-                 bendable_soft_levels_size: int = None):
+
+    def __init__(
+        self,
+        *,
+        bendable_hard_levels_size: int = None,
+        bendable_soft_levels_size: int = None
+    ):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution import (
-            PlanningScore as JavaPlanningScore)
-        super().__init__(JavaPlanningScore,
-                         {
-                             'bendableHardLevelsSize': bendable_hard_levels_size,
-                             'bendableSoftLevelsSize': bendable_soft_levels_size
-                         })
+            PlanningScore as JavaPlanningScore,
+        )
+
+        super().__init__(
+            JavaPlanningScore,
+            {
+                "bendableHardLevelsSize": bendable_hard_levels_size,
+                "bendableSoftLevelsSize": bendable_soft_levels_size,
+            },
+        )
 
 
 class DeepPlanningClone(JavaAnnotation):
@@ -668,7 +771,7 @@ class DeepPlanningClone(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import DeepPlanningClone, ShadowVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import DeepPlanningClone, ShadowVariable, planning_entity
     >>> from datetime import date
     >>> from typing import Annotated
     >>>
@@ -676,10 +779,13 @@ class DeepPlanningClone(JavaAnnotation):
     ... class Employee:
     ...     work_day_to_hours: Annotated[dict[date, int], ShadowVariable(...), DeepPlanningClone]
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.solution.cloner import (
-            DeepPlanningClone as JavaDeepPlanningClone)
+            DeepPlanningClone as JavaDeepPlanningClone,
+        )
+
         super().__init__(JavaDeepPlanningClone, {})
 
 
@@ -691,7 +797,7 @@ class ConstraintConfigurationProvider(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import ConstraintConfigurationProvider, planning_solution
+    >>> from blackops_legacy.solver.domain import ConstraintConfigurationProvider, planning_solution
     >>> from typing import Annotated
     >>> from domain import MyConstraintConfiguration
     >>>
@@ -699,10 +805,13 @@ class ConstraintConfigurationProvider(JavaAnnotation):
     ... class Timetable:
     ...     configuration: Annotated[MyConstraintConfiguration, ConstraintConfigurationProvider]
     """
+
     def __init__(self):
         ensure_init()
         from ai.timefold.solver.core.api.domain.constraintweight import (
-            ConstraintConfigurationProvider as JavaConstraintConfigurationProvider)
+            ConstraintConfigurationProvider as JavaConstraintConfigurationProvider,
+        )
+
         super().__init__(JavaConstraintConfigurationProvider, {})
 
 
@@ -715,24 +824,28 @@ class ConstraintWeight(JavaAnnotation):
 
     Examples
     --------
-    >>> from timefold.solver.domain import ConstraintWeight, constraint_configuration
-    >>> from timefold.solver.score import HardSoftScore
+    >>> from blackops_legacy.solver.domain import ConstraintWeight, constraint_configuration
+    >>> from blackops_legacy.solver.score import HardSoftScore
     >>> from typing import Annotated
     >>>
     >>> @constraint_configuration
     ... class ConstraintConfiguration:
     ...     maximize_value: Annotated[HardSoftScore, ConstraintWeight('Maximize value')]
     """
+
     def __init__(self, constraint_name: str, *, constraint_package: str = None):
         ensure_init()
-        from ai.timefold.solver.core.api.domain.constraintweight import ConstraintWeight as JavaConstraintWeight
-        super().__init__(JavaConstraintWeight, {
-            'value': constraint_name,
-            'constraintPackage': constraint_package
-        })
+        from ai.timefold.solver.core.api.domain.constraintweight import (
+            ConstraintWeight as JavaConstraintWeight,
+        )
+
+        super().__init__(
+            JavaConstraintWeight,
+            {"value": constraint_name, "constraintPackage": constraint_package},
+        )
 
 
-@JImplements('ai.timefold.solver.core.api.domain.entity.PinningFilter', deferred=True)
+@JImplements("ai.timefold.solver.core.api.domain.entity.PinningFilter", deferred=True)
 class _PythonPinningFilter:
     def __init__(self, delegate):
         self.delegate = delegate
@@ -741,10 +854,13 @@ class _PythonPinningFilter:
     def accept(self, solution, entity):
         return self.delegate(solution, entity)
 
+
 @overload
 def planning_entity(entity_class: Type[Entity_]) -> Type[Entity_]:
     ...
-def planning_entity(entity_class = None):
+
+
+def planning_entity(entity_class=None):
     """
     Specifies that the class is a planning entity.
     There are two types of entities:
@@ -760,7 +876,7 @@ def planning_entity(entity_class = None):
 
     Examples
     --------
-    >>> from timefold.solver.domain import PlanningVariable, planning_entity
+    >>> from blackops_legacy.solver.domain import PlanningVariable, planning_entity
     >>> from typing import Annotated
     >>> from domain import Timeslot, Room
     >>>
@@ -771,10 +887,12 @@ def planning_entity(entity_class = None):
     ...     timeslot: Annotated[Timeslot, PlanningVariable]
     """
     ensure_init()
-    from ai.timefold.solver.core.api.domain.entity import PlanningEntity as JavaPlanningEntity
+    from ai.timefold.solver.core.api.domain.entity import (
+        PlanningEntity as JavaPlanningEntity,
+    )
 
     def planning_entity_wrapper(entity_class_argument):
-        from .._timefold_java_interop import _add_to_compilation_queue
+        from .._blackops_java_interop import _add_to_compilation_queue
         from _jpyinterpreter import add_class_annotation
 
         out = add_class_annotation(JavaPlanningEntity)(entity_class_argument)
@@ -806,10 +924,10 @@ def planning_solution(planning_solution_class: Type[Solution_]) -> Type[Solution
 
     Examples
     --------
-    >>> from timefold.solver.domain import (PlanningScore, PlanningEntityCollectionProperty,
+    >>> from blackops_legacy.solver.domain import (PlanningScore, PlanningEntityCollectionProperty,
     ...                                     ProblemFactCollectionProperty, ValueRangeProvider,
     ...                                     ConstraintConfigurationProvider, planning_solution)
-    ... from timefold.solver.score import HardSoftScore
+    ... from blackops_legacy.solver.score import HardSoftScore
     >>> from typing import Annotated
     >>> from domain import Lesson, Room, Timeslot, TimetablingConstraintConfiguration
     >>>
@@ -823,14 +941,19 @@ def planning_solution(planning_solution_class: Type[Solution_]) -> Type[Solution
     """
     ensure_init()
     from _jpyinterpreter import add_class_annotation
-    from .._timefold_java_interop import _add_to_compilation_queue
-    from ai.timefold.solver.core.api.domain.solution import PlanningSolution as JavaPlanningSolution
+    from .._blackops_java_interop import _add_to_compilation_queue
+    from ai.timefold.solver.core.api.domain.solution import (
+        PlanningSolution as JavaPlanningSolution,
+    )
+
     out = add_class_annotation(JavaPlanningSolution)(planning_solution_class)
     _add_to_compilation_queue(planning_solution_class)
     return out
 
 
-def constraint_configuration(constraint_configuration_class: Type[Solution_]) -> Type[Solution_]:
+def constraint_configuration(
+    constraint_configuration_class: Type[Solution_],
+) -> Type[Solution_]:
     """
     Allows end users to change the constraint weights, by not hard coding them.
     This decorator specifies that the class holds a number of ConstraintWeight annotated attributes.
@@ -841,8 +964,8 @@ def constraint_configuration(constraint_configuration_class: Type[Solution_]) ->
 
     Examples
     --------
-    >>> from timefold.solver.domain import ConstraintWeight, constraint_configuration
-    >>> from timefold.solver.score import HardSoftScore
+    >>> from blackops_legacy.solver.domain import ConstraintWeight, constraint_configuration
+    >>> from blackops_legacy.solver.score import HardSoftScore
     >>> from typing import Annotated
     >>>
     >>> @constraint_configuration
@@ -852,9 +975,14 @@ def constraint_configuration(constraint_configuration_class: Type[Solution_]) ->
     ensure_init()
     from _jpyinterpreter import add_class_annotation
     from ai.timefold.solver.core.api.domain.constraintweight import (
-        ConstraintConfiguration as JavaConstraintConfiguration)
-    out = add_class_annotation(JavaConstraintConfiguration)(constraint_configuration_class)
+        ConstraintConfiguration as JavaConstraintConfiguration,
+    )
+
+    out = add_class_annotation(JavaConstraintConfiguration)(
+        constraint_configuration_class
+    )
     return out
+
 
 def deep_planning_clone(entity_class: Type[Entity_] = None) -> Type[Entity_]:
     """
@@ -865,7 +993,7 @@ def deep_planning_clone(entity_class: Type[Entity_] = None) -> Type[Entity_]:
 
     Examples
     --------
-    >>> from timefold.solver.domain import deep_planning_clone
+    >>> from blackops_legacy.solver.domain import deep_planning_clone
     >>>
     >>> @deep_planning_clone
     ... @dataclass
@@ -876,20 +1004,42 @@ def deep_planning_clone(entity_class: Type[Entity_] = None) -> Type[Entity_]:
     """
     ensure_init()
     from _jpyinterpreter import add_class_annotation
-    from .._timefold_java_interop import _add_to_compilation_queue
+    from .._blackops_java_interop import _add_to_compilation_queue
     from ai.timefold.solver.core.api.domain.solution.cloner import (
-            DeepPlanningClone as JavaDeepPlanningClone)
+        DeepPlanningClone as JavaDeepPlanningClone,
+    )
+
     out = add_class_annotation(JavaDeepPlanningClone)(entity_class)
     _add_to_compilation_queue(entity_class)
     return out
 
-__all__ = ['PlanningId', 'PlanningScore', 'PlanningPin', 'PlanningPinToIndex',
-           'PlanningVariable', 'PlanningVariableGraphType', 'PlanningListVariable',
-           'ShadowVariable', 'PiggybackShadowVariable', 'CascadingUpdateShadowVariable',
-           'IndexShadowVariable', 'PreviousElementShadowVariable', 'NextElementShadowVariable',
-           'AnchorShadowVariable', 'InverseRelationShadowVariable',
-           'ProblemFactProperty', 'ProblemFactCollectionProperty',
-           'PlanningEntityProperty', 'PlanningEntityCollectionProperty',
-           'ValueRangeProvider', 'DeepPlanningClone', 'ConstraintConfigurationProvider',
-           'ConstraintWeight',
-           'planning_entity', 'planning_solution', 'constraint_configuration', 'deep_planning_clone']
+
+__all__ = [
+    "PlanningId",
+    "PlanningScore",
+    "PlanningPin",
+    "PlanningPinToIndex",
+    "PlanningVariable",
+    "PlanningVariableGraphType",
+    "PlanningListVariable",
+    "ShadowVariable",
+    "PiggybackShadowVariable",
+    "CascadingUpdateShadowVariable",
+    "IndexShadowVariable",
+    "PreviousElementShadowVariable",
+    "NextElementShadowVariable",
+    "AnchorShadowVariable",
+    "InverseRelationShadowVariable",
+    "ProblemFactProperty",
+    "ProblemFactCollectionProperty",
+    "PlanningEntityProperty",
+    "PlanningEntityCollectionProperty",
+    "ValueRangeProvider",
+    "DeepPlanningClone",
+    "ConstraintConfigurationProvider",
+    "ConstraintWeight",
+    "planning_entity",
+    "planning_solution",
+    "constraint_configuration",
+    "deep_planning_clone",
+]

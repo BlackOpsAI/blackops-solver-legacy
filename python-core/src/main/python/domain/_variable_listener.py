@@ -6,19 +6,20 @@ from ..score import ScoreDirector
 if TYPE_CHECKING:
     pass
 
-Solution_ = TypeVar('Solution_')
-Entity_ = TypeVar('Entity_')
+Solution_ = TypeVar("Solution_")
+Entity_ = TypeVar("Entity_")
 
 
 class VariableListenerMeta(type):
     def __new__(cls, clsname, bases, attrs):
-        from .._timefold_java_interop import _add_to_compilation_queue
+        from .._blackops_java_interop import _add_to_compilation_queue
+
         out = super().__new__(cls, clsname, bases, attrs)
         _add_to_compilation_queue(out)
         return out
 
 
-@add_java_interface('ai.timefold.solver.core.api.domain.variable.VariableListener')
+@add_java_interface("ai.timefold.solver.core.api.domain.variable.VariableListener")
 class VariableListener(metaclass=VariableListenerMeta):
     """
     A listener sourced on a basic PlanningVariable.
@@ -35,6 +36,7 @@ class VariableListener(metaclass=VariableListenerMeta):
     If state must be implemented,
     implementations may need to override the methods `reset_working_solution`, and `close`.
     """
+
     def after_entity_added(self, score_director: ScoreDirector, entity) -> None:
         pass
 
@@ -64,6 +66,7 @@ class VariableListener(metaclass=VariableListenerMeta):
 
 
 if not TYPE_CHECKING:  # We do not want these methods to appear in the API
+
     def afterEntityAdded(self, java_score_director, entity) -> None:
         score_director = ScoreDirector(java_score_director)
         self.after_entity_added(score_director, entity)
@@ -112,4 +115,4 @@ if not TYPE_CHECKING:  # We do not want these methods to appear in the API
     VariableListener.requiresUniqueEntityEvents = requiresUniqueEntityEvents
 
 
-__all__ = ['VariableListener']
+__all__ = ["VariableListener"]

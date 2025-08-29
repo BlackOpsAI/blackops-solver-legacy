@@ -5,7 +5,7 @@ See `testing a constraint stream
 
 Examples
 --------
->>> from timefold.solver.test import ConstraintVerifier
+>>> from blackops_legacy.solver.test import ConstraintVerifier
 >>> from domain import Lesson, Room, Timeslot, generate_solver_config
 >>> from constraint import overlapping_timeslots
 >>>
@@ -16,21 +16,34 @@ Examples
 ...                 Lesson('Amy', Room('B'), timeslot))
 ...          .penalizes_by(1))
 """
-from typing import Callable, Generic, List, Type, TypeVar, TYPE_CHECKING, overload, Union
+from typing import (
+    Callable,
+    Generic,
+    List,
+    Type,
+    TypeVar,
+    TYPE_CHECKING,
+    overload,
+    Union,
+)
 
 from .._jpype_type_conversions import PythonBiFunction
-from .._timefold_java_interop import get_class
+from .._blackops_java_interop import get_class
 from ..score import ConstraintFactory
 from ..config import SolverConfig
 
 if TYPE_CHECKING:
     # These imports require a JVM to be running, so only import if type checking
-    from ai.timefold.solver.core.api.score.stream import Constraint, ConstraintFactory, ConstraintJustification
+    from ai.timefold.solver.core.api.score.stream import (
+        Constraint,
+        ConstraintFactory,
+        ConstraintJustification,
+    )
     from ai.timefold.solver.core.config.solver import SolverConfig
     from ai.timefold.solver.core.api.score import Score
 
 
-Solution_ = TypeVar('Solution_')
+Solution_ = TypeVar("Solution_")
 
 
 class ConstraintVerifier(Generic[Solution_]):
@@ -38,38 +51,59 @@ class ConstraintVerifier(Generic[Solution_]):
     Entry point for the ConstraintVerifier API, which is used to test constraints defined by
     a @constraint_provider function.
     """
+
     def __init__(self, delegate):
         self.delegate = delegate
 
     @staticmethod
     def create(solver_config: SolverConfig):
-        from ai.timefold.solver.test.api.score.stream import ConstraintVerifier as JavaConstraintVerifier  # noqa
-        return ConstraintVerifier(JavaConstraintVerifier.create(solver_config._to_java_solver_config()))
+        from ai.timefold.solver.test.api.score.stream import (
+            ConstraintVerifier as JavaConstraintVerifier,
+        )  # noqa
+
+        return ConstraintVerifier(
+            JavaConstraintVerifier.create(solver_config._to_java_solver_config())
+        )
 
     @staticmethod
-    def build(constraint_provider: Callable[['ConstraintFactory'], List['Constraint']],
-              planning_solution_class: Type[Solution_], *entity_classes: Type):
-        from ai.timefold.solver.test.api.score.stream import ConstraintVerifier as JavaConstraintVerifier  # noqa
-        constraint_provider_instance = get_class(constraint_provider).getConstructor().newInstance()
+    def build(
+        constraint_provider: Callable[["ConstraintFactory"], List["Constraint"]],
+        planning_solution_class: Type[Solution_],
+        *entity_classes: Type
+    ):
+        from ai.timefold.solver.test.api.score.stream import (
+            ConstraintVerifier as JavaConstraintVerifier,
+        )  # noqa
+
+        constraint_provider_instance = (
+            get_class(constraint_provider).getConstructor().newInstance()
+        )
         planning_solution_java_class = get_class(planning_solution_class)
         entity_java_classes = list(map(get_class, entity_classes))
-        return ConstraintVerifier(JavaConstraintVerifier.build(constraint_provider_instance,
-                                                               planning_solution_java_class,
-                                                               entity_java_classes))
+        return ConstraintVerifier(
+            JavaConstraintVerifier.build(
+                constraint_provider_instance,
+                planning_solution_java_class,
+                entity_java_classes,
+            )
+        )
 
     @overload
-    def verify_that(self) -> 'MultiConstraintVerification[Solution_]':
+    def verify_that(self) -> "MultiConstraintVerification[Solution_]":
         """
         Creates a constraint verifier for all constraints of the ConstraintProvider.
         """
         ...
 
     @overload
-    def verify_that(self, constraint_function: Callable[['ConstraintFactory'], 'Constraint']) -> \
-            'SingleConstraintVerification[Solution_]':
+    def verify_that(
+        self, constraint_function: Callable[["ConstraintFactory"], "Constraint"]
+    ) -> "SingleConstraintVerification[Solution_]":
         ...
 
-    def verify_that(self, constraint_function: Callable[['ConstraintFactory'], 'Constraint'] = None):
+    def verify_that(
+        self, constraint_function: Callable[["ConstraintFactory"], "Constraint"] = None
+    ):
         """
         Creates a constraint verifier for a given Constraint of the ConstraintProvider.
 
@@ -82,16 +116,22 @@ class ConstraintVerifier(Generic[Solution_]):
         if constraint_function is None:
             return MultiConstraintVerification(self.delegate.verifyThat())
         else:
-            return SingleConstraintVerification(self.delegate.verifyThat(
-                PythonBiFunction(lambda _, constraint_factory:
-                                 constraint_function(ConstraintFactory(constraint_factory)))))
+            return SingleConstraintVerification(
+                self.delegate.verifyThat(
+                    PythonBiFunction(
+                        lambda _, constraint_factory: constraint_function(
+                            ConstraintFactory(constraint_factory)
+                        )
+                    )
+                )
+            )
 
 
 class SingleConstraintVerification(Generic[Solution_]):
     def __init__(self, delegate):
         self.delegate = delegate
 
-    def given(self, *facts) -> 'SingleConstraintAssertion':
+    def given(self, *facts) -> "SingleConstraintAssertion":
         """
         Set the facts for this assertion
 
@@ -101,10 +141,15 @@ class SingleConstraintVerification(Generic[Solution_]):
             never ``None``, at least one
         """
         from ai.timefold.jpyinterpreter import CPythonBackedPythonInterpreter  # noqa
-        from ai.timefold.jpyinterpreter.types import CPythonBackedPythonLikeObject  # noqa
-        from ai.timefold.jpyinterpreter.types.wrappers import OpaquePythonReference  # noqa
+        from ai.timefold.jpyinterpreter.types import (
+            CPythonBackedPythonLikeObject,
+        )  # noqa
+        from ai.timefold.jpyinterpreter.types.wrappers import (
+            OpaquePythonReference,
+        )  # noqa
         from java.util import HashMap
         from _jpyinterpreter import convert_to_java_python_like_object
+
         reference_map = HashMap()
         wrapped_facts = []
 
@@ -114,7 +159,7 @@ class SingleConstraintVerification(Generic[Solution_]):
 
         return SingleConstraintAssertion(self.delegate.given(wrapped_facts))
 
-    def given_solution(self, solution: 'Solution_') -> 'SingleConstraintAssertion':
+    def given_solution(self, solution: "Solution_") -> "SingleConstraintAssertion":
         """
         Set the solution to be used for this assertion
 
@@ -124,6 +169,7 @@ class SingleConstraintVerification(Generic[Solution_]):
             never ``None``
         """
         from _jpyinterpreter import convert_to_java_python_like_object
+
         wrapped_solution = convert_to_java_python_like_object(solution)
         return SingleConstraintAssertion(self.delegate.givenSolution(wrapped_solution))
 
@@ -132,7 +178,7 @@ class MultiConstraintVerification(Generic[Solution_]):
     def __init__(self, delegate):
         self.delegate = delegate
 
-    def given(self, *facts) -> 'MultiConstraintAssertion':
+    def given(self, *facts) -> "MultiConstraintAssertion":
         """
         Set the facts for this assertion
 
@@ -142,10 +188,15 @@ class MultiConstraintVerification(Generic[Solution_]):
             never ``None``, at least one
         """
         from ai.timefold.jpyinterpreter import CPythonBackedPythonInterpreter  # noqa
-        from ai.timefold.jpyinterpreter.types import CPythonBackedPythonLikeObject  # noqa
-        from ai.timefold.jpyinterpreter.types.wrappers import OpaquePythonReference  # noqa
+        from ai.timefold.jpyinterpreter.types import (
+            CPythonBackedPythonLikeObject,
+        )  # noqa
+        from ai.timefold.jpyinterpreter.types.wrappers import (
+            OpaquePythonReference,
+        )  # noqa
         from _jpyinterpreter import convert_to_java_python_like_object
         from java.util import HashMap
+
         reference_map = HashMap()
         wrapped_facts = []
 
@@ -155,7 +206,7 @@ class MultiConstraintVerification(Generic[Solution_]):
 
         return MultiConstraintAssertion(self.delegate.given(wrapped_facts))
 
-    def given_solution(self, solution: 'Solution_') -> 'MultiConstraintAssertion':
+    def given_solution(self, solution: "Solution_") -> "MultiConstraintAssertion":
         """
         Set the solution to be used for this assertion.
 
@@ -165,6 +216,7 @@ class MultiConstraintVerification(Generic[Solution_]):
             never ``None``
         """
         from _jpyinterpreter import convert_to_java_python_like_object
+
         wrapped_solution = convert_to_java_python_like_object(solution)
         return MultiConstraintAssertion(self.delegate.givenSolution(wrapped_solution))
 
@@ -173,8 +225,9 @@ class SingleConstraintAssertion:
     def __init__(self, delegate):
         self.delegate = delegate
 
-    def justifies_with(self, *justifications: 'ConstraintJustification', message: str = None) \
-            -> 'SingleConstraintAssertion':
+    def justifies_with(
+        self, *justifications: "ConstraintJustification", message: str = None
+    ) -> "SingleConstraintAssertion":
         """
         Asserts that the constraint being tested, given a set of facts, results in given justifications.
 
@@ -194,21 +247,29 @@ class SingleConstraintAssertion:
         from java.lang import AssertionError as JavaAssertionError  # noqa
         from _jpyinterpreter import convert_to_java_python_like_object
         from java.util import HashMap
+
         reference_map = HashMap()
         wrapped_justifications = []
         for justification in justifications:
-            wrapped_justification = convert_to_java_python_like_object(justification, reference_map)
+            wrapped_justification = convert_to_java_python_like_object(
+                justification, reference_map
+            )
             wrapped_justifications.append(wrapped_justification)
         try:
             if message is None:
-                return SingleConstraintAssertion(self.delegate.justifiesWith(*wrapped_justifications))
+                return SingleConstraintAssertion(
+                    self.delegate.justifiesWith(*wrapped_justifications)
+                )
             else:
-                return SingleConstraintAssertion(self.delegate.justifiesWith(message, *wrapped_justifications))
+                return SingleConstraintAssertion(
+                    self.delegate.justifiesWith(message, *wrapped_justifications)
+                )
         except JavaAssertionError as e:
             raise AssertionError(e.getMessage())
 
-    def justifies_with_exactly(self, *justifications: 'ConstraintJustification', message: str = None) \
-            -> 'SingleConstraintAssertion':
+    def justifies_with_exactly(
+        self, *justifications: "ConstraintJustification", message: str = None
+    ) -> "SingleConstraintAssertion":
         """
         Asserts that the constraint being tested, given a set of facts, results in given justifications an no others.
 
@@ -228,20 +289,29 @@ class SingleConstraintAssertion:
         from java.lang import AssertionError as JavaAssertionError  # noqa
         from _jpyinterpreter import convert_to_java_python_like_object
         from java.util import HashMap
+
         reference_map = HashMap()
         wrapped_justifications = []
         for justification in justifications:
-            wrapped_justification = convert_to_java_python_like_object(justification, reference_map)
+            wrapped_justification = convert_to_java_python_like_object(
+                justification, reference_map
+            )
             wrapped_justifications.append(wrapped_justification)
         try:
             if message is None:
-                return SingleConstraintAssertion(self.delegate.justifiesWithExactly(*wrapped_justifications))
+                return SingleConstraintAssertion(
+                    self.delegate.justifiesWithExactly(*wrapped_justifications)
+                )
             else:
-                return SingleConstraintAssertion(self.delegate.justifiesWithExactly(message, *wrapped_justifications))
+                return SingleConstraintAssertion(
+                    self.delegate.justifiesWithExactly(message, *wrapped_justifications)
+                )
         except JavaAssertionError as e:
             raise AssertionError(e.getMessage())
 
-    def indicts_with(self, *indictments, message: str = None) -> 'SingleConstraintAssertion':
+    def indicts_with(
+        self, *indictments, message: str = None
+    ) -> "SingleConstraintAssertion":
         """
         Asserts that the constraint being tested, given a set of facts, results in given indictments.
 
@@ -261,20 +331,29 @@ class SingleConstraintAssertion:
         from java.lang import AssertionError as JavaAssertionError  # noqa
         from _jpyinterpreter import convert_to_java_python_like_object
         from java.util import HashMap
+
         reference_map = HashMap()
         wrapped_indictments = []
         for indictment in indictments:
-            wrapped_indictment = convert_to_java_python_like_object(indictment, reference_map)
+            wrapped_indictment = convert_to_java_python_like_object(
+                indictment, reference_map
+            )
             wrapped_indictments.append(wrapped_indictment)
         try:
             if message is None:
-                return SingleConstraintAssertion(self.delegate.indictsWith(*wrapped_indictments))
+                return SingleConstraintAssertion(
+                    self.delegate.indictsWith(*wrapped_indictments)
+                )
             else:
-                return SingleConstraintAssertion(self.delegate.indictsWith(message, *wrapped_indictments))
+                return SingleConstraintAssertion(
+                    self.delegate.indictsWith(message, *wrapped_indictments)
+                )
         except JavaAssertionError as e:
             raise AssertionError(e.getMessage())
 
-    def indicts_with_exactly(self, *indictments, message: str = None) -> 'SingleConstraintAssertion':
+    def indicts_with_exactly(
+        self, *indictments, message: str = None
+    ) -> "SingleConstraintAssertion":
         """
         Asserts that the constraint being tested, given a set of facts, results in given indictments an no others.
 
@@ -294,16 +373,23 @@ class SingleConstraintAssertion:
         from java.lang import AssertionError as JavaAssertionError  # noqa
         from _jpyinterpreter import convert_to_java_python_like_object
         from java.util import HashMap
+
         reference_map = HashMap()
         wrapped_indictments = []
         for indictment in indictments:
-            wrapped_indictment = convert_to_java_python_like_object(indictment, reference_map)
+            wrapped_indictment = convert_to_java_python_like_object(
+                indictment, reference_map
+            )
             wrapped_indictments.append(wrapped_indictment)
         try:
             if message is None:
-                return SingleConstraintAssertion(self.delegate.indictsWithExactly(*wrapped_indictments))
+                return SingleConstraintAssertion(
+                    self.delegate.indictsWithExactly(*wrapped_indictments)
+                )
             else:
-                return SingleConstraintAssertion(self.delegate.indictsWithExactly(message, *wrapped_indictments))
+                return SingleConstraintAssertion(
+                    self.delegate.indictsWithExactly(message, *wrapped_indictments)
+                )
         except JavaAssertionError as e:
             raise AssertionError(e.getMessage())
 
@@ -330,6 +416,7 @@ class SingleConstraintAssertion:
             when there are no penalties if `times` is not provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is None and message is None:
                 self.delegate.penalizes()
@@ -364,6 +451,7 @@ class SingleConstraintAssertion:
             when the expected penalty is not observed if `times` is provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is not None and message is None:
                 self.delegate.penalizesLessThan(times)
@@ -394,6 +482,7 @@ class SingleConstraintAssertion:
             when the expected penalty is not observed if `times` is provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is not None and message is None:
                 self.delegate.penalizesMoreThan(times)
@@ -424,6 +513,7 @@ class SingleConstraintAssertion:
             when the expected penalty is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.penalizesBy(match_weight_total)
@@ -455,6 +545,7 @@ class SingleConstraintAssertion:
             when the expected penalty is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.penalizesByLessThan(match_weight_total)
@@ -486,6 +577,7 @@ class SingleConstraintAssertion:
             when the expected penalty is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.penalizesByMoreThan(match_weight_total)
@@ -517,6 +609,7 @@ class SingleConstraintAssertion:
             when there are no rewards if times is not provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is None and message is None:
                 self.delegate.rewards()
@@ -551,6 +644,7 @@ class SingleConstraintAssertion:
             when the expected reward is not observed if times is provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is not None and message is None:
                 self.delegate.rewardsLessThan(times)
@@ -581,6 +675,7 @@ class SingleConstraintAssertion:
             when the expected reward is not observed if times is provided
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if times is not None and message is None:
                 self.delegate.rewardsMoreThan(times)
@@ -611,6 +706,7 @@ class SingleConstraintAssertion:
             when the expected reward is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.rewardsWith(match_weight_total)
@@ -641,6 +737,7 @@ class SingleConstraintAssertion:
             when the expected reward is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.rewardsWithLessThan(match_weight_total)
@@ -671,6 +768,7 @@ class SingleConstraintAssertion:
             when the expected reward is not observed
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.rewardsWithMoreThan(match_weight_total)
@@ -684,7 +782,7 @@ class MultiConstraintAssertion:
     def __init__(self, delegate):
         self.delegate = delegate
 
-    def scores(self, score: 'Score', message: str = None):
+    def scores(self, score: "Score", message: str = None):
         """
         Asserts that the `constraint_provider` under test, given a set of facts, results in a specific `Score`.
 
@@ -702,6 +800,7 @@ class MultiConstraintAssertion:
             when the expected score does not match the calculated score
         """
         from java.lang import AssertionError as JavaAssertionError  # noqa
+
         try:
             if message is None:
                 self.delegate.scores(score)
@@ -712,7 +811,9 @@ class MultiConstraintAssertion:
 
 
 __all__ = [
-    'ConstraintVerifier',
-    'SingleConstraintVerification', 'SingleConstraintAssertion',
-    'MultiConstraintVerification', 'MultiConstraintAssertion'
+    "ConstraintVerifier",
+    "SingleConstraintVerification",
+    "SingleConstraintAssertion",
+    "MultiConstraintVerification",
+    "MultiConstraintAssertion",
 ]

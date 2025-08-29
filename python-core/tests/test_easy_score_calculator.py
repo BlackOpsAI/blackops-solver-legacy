@@ -1,7 +1,7 @@
-from timefold.solver import *
-from timefold.solver.domain import *
-from timefold.solver.config import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.score import *
 
 from typing import Annotated, List
 from dataclasses import dataclass, field
@@ -34,11 +34,9 @@ def test_easy_score_calculator():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             easy_score_calculator_function=my_score_calculator
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='9'
-        )
+        termination_config=TerminationConfig(best_score_limit="9"),
     )
-    problem: Solution = Solution([Entity('A'), Entity('B'), Entity('C')], [1, 2, 3])
+    problem: Solution = Solution([Entity("A"), Entity("B"), Entity("C")], [1, 2, 3])
     solver = SolverFactory.create(solver_config).build_solver()
     solution = solver.solve(problem)
     assert solution.score.score == 9

@@ -1,25 +1,42 @@
 from _jpyinterpreter import unwrap_python_like_object, add_java_interface
 from dataclasses import dataclass
-from typing import overload, TypeVar, Generic, Union, TYPE_CHECKING, Any, cast, Optional, Type
+from typing import (
+    overload,
+    TypeVar,
+    Generic,
+    Union,
+    TYPE_CHECKING,
+    Any,
+    cast,
+    Optional,
+    Type,
+)
 
 from .._jpype_type_conversions import to_python_score
-from .._timefold_java_interop import get_class, _user_package_prefix
+from .._blackops_java_interop import get_class, _user_package_prefix
 
 if TYPE_CHECKING:
     # These imports require a JVM to be running, so only import if type checking
     from ..score import Score
-    from ai.timefold.solver.core.api.score import ScoreExplanation as _JavaScoreExplanation
+    from ai.timefold.solver.core.api.score import (
+        ScoreExplanation as _JavaScoreExplanation,
+    )
     from ai.timefold.solver.core.api.score.analysis import (
         ConstraintAnalysis as _JavaConstraintAnalysis,
         MatchAnalysis as _JavaMatchAnalysis,
-        ScoreAnalysis as _JavaScoreAnalysis)
-    from ai.timefold.solver.core.api.score.constraint import Indictment as _JavaIndictment
-    from ai.timefold.solver.core.api.score.constraint import ConstraintMatch as _JavaConstraintMatch
+        ScoreAnalysis as _JavaScoreAnalysis,
+    )
+    from ai.timefold.solver.core.api.score.constraint import (
+        Indictment as _JavaIndictment,
+    )
+    from ai.timefold.solver.core.api.score.constraint import (
+        ConstraintMatch as _JavaConstraintMatch,
+    )
 
-Solution_ = TypeVar('Solution_')
-ProblemId_ = TypeVar('ProblemId_')
-Score_ = TypeVar('Score_', bound='Score')
-Justification_ = TypeVar('Justification_', bound='ConstraintJustification')
+Solution_ = TypeVar("Solution_")
+ProblemId_ = TypeVar("ProblemId_")
+Score_ = TypeVar("Score_", bound="Score")
+Justification_ = TypeVar("Justification_", bound="ConstraintJustification")
 
 
 @dataclass(frozen=True, unsafe_hash=True)
@@ -43,25 +60,29 @@ class ConstraintRef:
     constraint_id : str
         Always derived from `packageName` and `constraintName`.
     """
+
     package_name: str
     constraint_name: str
 
     @property
     def constraint_id(self) -> str:
-        return f'{self.package_name}/{self.constraint_name}'
+        return f"{self.package_name}/{self.constraint_name}"
 
     @staticmethod
     def parse_id(constraint_id: str):
-        slash_index = constraint_id.rfind('/')
+        slash_index = constraint_id.rfind("/")
         if slash_index == -1:
             raise ValueError(
-                f'The constraint_id {constraint_id} is invalid as it does not contain a package separator \'/\'.')
+                f"The constraint_id {constraint_id} is invalid as it does not contain a package separator '/'."
+            )
         package_name = constraint_id[:slash_index]
-        constraint_name = constraint_id[slash_index + 1:]
+        constraint_name = constraint_id[slash_index + 1 :]
         return ConstraintRef(package_name, constraint_name)
 
     @staticmethod
-    def compose_constraint_id(solution_type_or_package: Union[type, str], constraint_name: str) -> str:
+    def compose_constraint_id(
+        solution_type_or_package: Union[type, str], constraint_name: str
+    ) -> str:
         """
         Returns the constraint id with the given constraint package and the given name
 
@@ -81,13 +102,23 @@ class ConstraintRef:
         """
         package = solution_type_or_package
         if not isinstance(solution_type_or_package, str):
-            package = get_class(solution_type_or_package).getPackage().getName()[len(_user_package_prefix):]
-        return ConstraintRef(package_name=package,
-                             constraint_name=constraint_name).constraint_id
+            package = (
+                get_class(solution_type_or_package)
+                .getPackage()
+                .getName()[len(_user_package_prefix) :]
+            )
+        return ConstraintRef(
+            package_name=package, constraint_name=constraint_name
+        ).constraint_id
 
     def _to_java(self):
-        from ai.timefold.solver.core.api.score.constraint import ConstraintRef as JavaConstraintRef
-        return JavaConstraintRef.of(f'{_user_package_prefix}{self.package_name}', self.constraint_name)
+        from ai.timefold.solver.core.api.score.constraint import (
+            ConstraintRef as JavaConstraintRef,
+        )
+
+        return JavaConstraintRef.of(
+            f"{_user_package_prefix}{self.package_name}", self.constraint_name
+        )
 
 
 def _safe_hash(obj: Any) -> int:
@@ -106,6 +137,7 @@ class ConstraintMatch(Generic[Score_]):
     The details of this ordering are unspecified and are subject to change.
     If possible, prefer using `SolutionManager.analyze` instead.
     """
+
     constraint_ref: ConstraintRef
     justification: Any
     indicted_objects: tuple[Any, ...]
@@ -132,6 +164,7 @@ class ConstraintMatchTotal(Generic[Score_]):
     Retrievable from `ScoreExplanation.constraint_match_total_map`.
     If possible, prefer using `SolutionManager.analyze` instead.
     """
+
     constraint_ref: ConstraintRef
     constraint_match_count: int
     constraint_match_set: set[ConstraintMatch]
@@ -151,7 +184,7 @@ class ConstraintMatchTotal(Generic[Score_]):
         return combined_hash
 
 
-@add_java_interface('ai.timefold.solver.core.api.score.stream.ConstraintJustification')
+@add_java_interface("ai.timefold.solver.core.api.score.stream.ConstraintJustification")
 class ConstraintJustification:
     """
     Marker interface for constraint justifications.
@@ -185,6 +218,7 @@ class ConstraintJustification:
     --------
     ConstraintMatch.justification
     """
+
     pass
 
 
@@ -194,6 +228,7 @@ class DefaultConstraintJustification(ConstraintJustification):
     Default implementation of `ConstraintJustification`, returned by
     `ConstraintMatch.justification` unless the user defined a custom justification mapping.
     """
+
     facts: tuple[Any, ...]
     impact: Score_
 
@@ -204,35 +239,53 @@ class DefaultConstraintJustification(ConstraintJustification):
         return combined_hash
 
 
-def _map_constraint_match_set(constraint_match_set: set['_JavaConstraintMatch']) -> set[ConstraintMatch]:
+def _map_constraint_match_set(
+    constraint_match_set: set["_JavaConstraintMatch"],
+) -> set[ConstraintMatch]:
     return {
-        ConstraintMatch(constraint_ref=ConstraintRef(package_name=constraint_match
-                                                     .getConstraintRef().packageName()[len(_user_package_prefix):],
-                                                     constraint_name=constraint_match
-                                                     .getConstraintRef().constraintName()),
-                        justification=_unwrap_justification(constraint_match.getJustification()),
-                        indicted_objects=tuple([unwrap_python_like_object(indicted)
-                                                for indicted in cast(list, constraint_match.getIndictedObjectList())]),
-                        score=to_python_score(constraint_match.getScore())
-                        )
+        ConstraintMatch(
+            constraint_ref=ConstraintRef(
+                package_name=constraint_match.getConstraintRef().packageName()[
+                    len(_user_package_prefix) :
+                ],
+                constraint_name=constraint_match.getConstraintRef().constraintName(),
+            ),
+            justification=_unwrap_justification(constraint_match.getJustification()),
+            indicted_objects=tuple(
+                [
+                    unwrap_python_like_object(indicted)
+                    for indicted in cast(list, constraint_match.getIndictedObjectList())
+                ]
+            ),
+            score=to_python_score(constraint_match.getScore()),
+        )
         for constraint_match in constraint_match_set
     }
 
 
 def _unwrap_justification(justification: Any) -> ConstraintJustification:
     from ai.timefold.solver.core.api.score.stream import (
-        DefaultConstraintJustification as _JavaDefaultConstraintJustification)
+        DefaultConstraintJustification as _JavaDefaultConstraintJustification,
+    )
+
     if isinstance(justification, _JavaDefaultConstraintJustification):
         fact_list = justification.getFacts()
-        return DefaultConstraintJustification(facts=tuple([unwrap_python_like_object(fact)
-                                                           for fact in cast(list, fact_list)]),
-                                              impact=to_python_score(justification.getImpact()))
+        return DefaultConstraintJustification(
+            facts=tuple(
+                [unwrap_python_like_object(fact) for fact in cast(list, fact_list)]
+            ),
+            impact=to_python_score(justification.getImpact()),
+        )
     else:
         return unwrap_python_like_object(justification)
 
 
-def _unwrap_justification_list(justification_list: list[Any]) -> list[ConstraintJustification]:
-    return [_unwrap_justification(justification) for justification in justification_list]
+def _unwrap_justification_list(
+    justification_list: list[Any],
+) -> list[ConstraintJustification]:
+    return [
+        _unwrap_justification(justification) for justification in justification_list
+    ]
 
 
 class Indictment(Generic[Score_]):
@@ -257,7 +310,7 @@ class Indictment(Generic[Score_]):
 
     """
 
-    def __init__(self, delegate: '_JavaIndictment[Score_]'):
+    def __init__(self, delegate: "_JavaIndictment[Score_]"):
         self._delegate = delegate
 
     @property
@@ -276,7 +329,9 @@ class Indictment(Generic[Score_]):
     def indicted_object(self) -> Any:
         return unwrap_python_like_object(self._delegate.getIndictedObject())
 
-    def get_justification_list(self, justification_type: Type[Justification_] = None) -> list[Justification_]:
+    def get_justification_list(
+        self, justification_type: Type[Justification_] = None
+    ) -> list[Justification_]:
         """
         Retrieve ConstraintJustification instances associated with ConstraintMatches in `constraint_match_set`.
         This is equivalent to retrieving `constraint_match_set` and collecting all `ConstraintMatch.justification`
@@ -296,7 +351,9 @@ class Indictment(Generic[Score_]):
         if justification_type is None:
             justification_list = self._delegate.getJustificationList()
         else:
-            justification_list = self._delegate.getJustificationList(get_class(justification_type))
+            justification_list = self._delegate.getJustificationList(
+                get_class(justification_type)
+            )
 
         return _unwrap_justification_list(justification_list)
 
@@ -344,32 +401,42 @@ class ScoreExplanation(Generic[Solution_]):
         The sum of `ConstraintMatchTotal.score` accessible from this `dict`
         differs from `score` because each `ConstraintMatch.score` is counted for each of the indicted objects.
     """
-    _delegate: '_JavaScoreExplanation'
 
-    def __init__(self, delegate: '_JavaScoreExplanation'):
+    _delegate: "_JavaScoreExplanation"
+
+    def __init__(self, delegate: "_JavaScoreExplanation"):
         self._delegate = delegate
 
     @property
     def constraint_match_total_map(self) -> dict[str, ConstraintMatchTotal]:
         return {
-            e.getKey()[len(_user_package_prefix):]: ConstraintMatchTotal(
+            e.getKey()[len(_user_package_prefix) :]: ConstraintMatchTotal(
                 constraint_ref=ConstraintRef(
-                    package_name=e.getValue().getConstraintRef().packageName()[len(_user_package_prefix):],
-                    constraint_name=e.getValue().getConstraintRef().constraintName()),
+                    package_name=e.getValue()
+                    .getConstraintRef()
+                    .packageName()[len(_user_package_prefix) :],
+                    constraint_name=e.getValue().getConstraintRef().constraintName(),
+                ),
                 constraint_match_count=e.getValue().getConstraintMatchCount(),
-                constraint_match_set=_map_constraint_match_set(e.getValue().getConstraintMatchSet()),
+                constraint_match_set=_map_constraint_match_set(
+                    e.getValue().getConstraintMatchSet()
+                ),
                 constraint_weight=to_python_score(e.getValue().getConstraintWeight()),
-                score=to_python_score(e.getValue().getScore())
+                score=to_python_score(e.getValue().getScore()),
             )
-            for e in cast(set['_JavaMap.Entry[str, _JavaConstraintMatchTotal]'],
-                          self._delegate.getConstraintMatchTotalMap().entrySet())
+            for e in cast(
+                set["_JavaMap.Entry[str, _JavaConstraintMatchTotal]"],
+                self._delegate.getConstraintMatchTotalMap().entrySet(),
+            )
         }
 
     @property
     def indictment_map(self) -> dict[Any, Indictment]:
         return {
             unwrap_python_like_object(e.getKey()): Indictment(e.getValue())
-            for e in cast(set['_JavaMap.Entry'], self._delegate.getIndictmentMap().entrySet())
+            for e in cast(
+                set["_JavaMap.Entry"], self._delegate.getIndictmentMap().entrySet()
+            )
         }
 
     @property
@@ -377,19 +444,22 @@ class ScoreExplanation(Generic[Solution_]):
         return self._delegate.isInitialized()
 
     @property
-    def score(self) -> 'Score':
+    def score(self) -> "Score":
         return to_python_score(self._delegate.getScore())
 
     @property
     def solution(self) -> Solution_:
         from _jpyinterpreter import unwrap_python_like_object
+
         return unwrap_python_like_object(self._delegate.getSolution())
 
     @property
     def summary(self) -> str:
         return self._delegate.getSummary()
 
-    def get_justification_list(self, justification_type: Type[Justification_] = None) -> list[Justification_]:
+    def get_justification_list(
+        self, justification_type: Type[Justification_] = None
+    ) -> list[Justification_]:
         """
         Explains the `Score` of the `score` attribute for all constraints.
         The return value of this method is determined by several factors:
@@ -416,7 +486,9 @@ class ScoreExplanation(Generic[Solution_]):
         if justification_type is None:
             justification_list = self._delegate.getJustificationList()
         else:
-            justification_list = self._delegate.getJustificationList(get_class(justification_type))
+            justification_list = self._delegate.getJustificationList(
+                get_class(justification_type)
+            )
 
         return _unwrap_justification_list(justification_list)
 
@@ -432,15 +504,20 @@ class MatchAnalysis(Generic[Score_]):
     score : Score_
     justification : ConstraintJustification
     """
-    _delegate: '_JavaMatchAnalysis'
 
-    def __init__(self, delegate: '_JavaMatchAnalysis'):
+    _delegate: "_JavaMatchAnalysis"
+
+    def __init__(self, delegate: "_JavaMatchAnalysis"):
         self._delegate = delegate
 
     @property
     def constraint_ref(self) -> ConstraintRef:
-        return ConstraintRef(package_name=self._delegate.constraintRef().packageName()[len(_user_package_prefix):],
-                             constraint_name=self._delegate.constraintRef().constraintName())
+        return ConstraintRef(
+            package_name=self._delegate.constraintRef().packageName()[
+                len(_user_package_prefix) :
+            ],
+            constraint_name=self._delegate.constraintRef().constraintName(),
+        )
 
     @property
     def score(self) -> Score_:
@@ -482,9 +559,10 @@ class ConstraintAnalysis(Generic[Score_]):
         negative otherwise.
         Need not be equal to the size of the matches list.
     """
-    _delegate: '_JavaConstraintAnalysis[Score_]'
 
-    def __init__(self, delegate: '_JavaConstraintAnalysis[Score_]'):
+    _delegate: "_JavaConstraintAnalysis[Score_]"
+
+    def __init__(self, delegate: "_JavaConstraintAnalysis[Score_]"):
         self._delegate = delegate
         delegate.constraintRef()
 
@@ -493,12 +571,16 @@ class ConstraintAnalysis(Generic[Score_]):
 
     @property
     def constraint_ref(self) -> ConstraintRef:
-        return ConstraintRef(package_name=self._delegate.constraintRef().packageName()[len(_user_package_prefix):],
-                             constraint_name=self._delegate.constraintRef().constraintName())
+        return ConstraintRef(
+            package_name=self._delegate.constraintRef().packageName()[
+                len(_user_package_prefix) :
+            ],
+            constraint_name=self._delegate.constraintRef().constraintName(),
+        )
 
     @property
     def constraint_package(self) -> str:
-        return self._delegate.constraintPackage()[len(_user_package_prefix):]
+        return self._delegate.constraintPackage()[len(_user_package_prefix) :]
 
     @property
     def constraint_name(self) -> str:
@@ -510,8 +592,12 @@ class ConstraintAnalysis(Generic[Score_]):
 
     @property
     def matches(self) -> list[MatchAnalysis[Score_]]:
-        return [MatchAnalysis(match_analysis)
-                for match_analysis in cast(list['_JavaMatchAnalysis[Score_]'], self._delegate.matches())]
+        return [
+            MatchAnalysis(match_analysis)
+            for match_analysis in cast(
+                list["_JavaMatchAnalysis[Score_]"], self._delegate.matches()
+            )
+        ]
 
     @property
     def match_count(self) -> int:
@@ -575,9 +661,10 @@ class ScoreAnalysis:
     the constructors of this record are off-limits.
     We ask users to use exclusively `SolutionManager.analyze` to obtain instances of this record.
     """
-    _delegate: '_JavaScoreAnalysis'
 
-    def __init__(self, delegate: '_JavaScoreAnalysis'):
+    _delegate: "_JavaScoreAnalysis"
+
+    def __init__(self, delegate: "_JavaScoreAnalysis"):
         self._delegate = delegate
 
     def __str__(self):
@@ -587,32 +674,42 @@ class ScoreAnalysis:
         return self.diff(other)
 
     @property
-    def score(self) -> 'Score':
+    def score(self) -> "Score":
         return to_python_score(self._delegate.score())
 
     @property
     def constraint_map(self) -> dict[ConstraintRef, ConstraintAnalysis]:
         return {
-            ConstraintRef(package_name=e.getKey().packageName()[len(_user_package_prefix):],
-                          constraint_name=e.getKey().constraintName())
-            : ConstraintAnalysis(e.getValue())
-            for e in cast(set['_JavaMap.Entry[_JavaConstraintRef, _JavaConstraintAnalysis]'],
-                          self._delegate.constraintMap().entrySet())
+            ConstraintRef(
+                package_name=e.getKey().packageName()[len(_user_package_prefix) :],
+                constraint_name=e.getKey().constraintName(),
+            ): ConstraintAnalysis(e.getValue())
+            for e in cast(
+                set["_JavaMap.Entry[_JavaConstraintRef, _JavaConstraintAnalysis]"],
+                self._delegate.constraintMap().entrySet(),
+            )
         }
 
     @property
     def constraint_analyses(self) -> list[ConstraintAnalysis]:
         return [
-            ConstraintAnalysis(analysis) for analysis in cast(
-                list['_JavaConstraintAnalysis[Score]'], self._delegate.constraintAnalyses())
+            ConstraintAnalysis(analysis)
+            for analysis in cast(
+                list["_JavaConstraintAnalysis[Score]"],
+                self._delegate.constraintAnalyses(),
+            )
         ]
 
     @overload
-    def constraint_analysis(self, constraint_package: str, constraint_name: str) -> ConstraintAnalysis:
+    def constraint_analysis(
+        self, constraint_package: str, constraint_name: str
+    ) -> ConstraintAnalysis:
         ...
 
     @overload
-    def constraint_analysis(self, constraint_ref: 'ConstraintRef') -> ConstraintAnalysis:
+    def constraint_analysis(
+        self, constraint_ref: "ConstraintRef"
+    ) -> ConstraintAnalysis:
         ...
 
     def constraint_analysis(self, *args) -> ConstraintAnalysis:
@@ -632,9 +729,15 @@ class ScoreAnalysis:
             None if no constraint matches of such constraint are present
         """
         if len(args) == 1:
-            return ConstraintAnalysis(self._delegate.getConstraintAnalysis(args[0]._to_java()))
+            return ConstraintAnalysis(
+                self._delegate.getConstraintAnalysis(args[0]._to_java())
+            )
         else:
-            return ConstraintAnalysis(self._delegate.getConstraintAnalysis(f'{_user_package_prefix}{args[0]}', args[1]))
+            return ConstraintAnalysis(
+                self._delegate.getConstraintAnalysis(
+                    f"{_user_package_prefix}{args[0]}", args[1]
+                )
+            )
 
     @property
     def summary(self) -> str:
@@ -644,7 +747,7 @@ class ScoreAnalysis:
     def is_solution_initialized(self) -> bool:
         return self._delegate.isSolutionInitialized()
 
-    def diff(self, other: 'ScoreAnalysis') -> 'ScoreAnalysis':
+    def diff(self, other: "ScoreAnalysis") -> "ScoreAnalysis":
         """
         Compare this `ScoreAnalysis to another `ScoreAnalysis`
         and retrieve the difference between them.
@@ -675,7 +778,15 @@ class ScoreAnalysis:
         return ScoreAnalysis(self._delegate.diff(other._delegate))
 
 
-__all__ = ['ScoreExplanation',
-           'ConstraintRef', 'ConstraintMatch', 'ConstraintMatchTotal',
-           'ConstraintJustification', 'DefaultConstraintJustification', 'Indictment',
-           'ScoreAnalysis', 'ConstraintAnalysis', 'MatchAnalysis']
+__all__ = [
+    "ScoreExplanation",
+    "ConstraintRef",
+    "ConstraintMatch",
+    "ConstraintMatchTotal",
+    "ConstraintJustification",
+    "DefaultConstraintJustification",
+    "Indictment",
+    "ScoreAnalysis",
+    "ConstraintAnalysis",
+    "MatchAnalysis",
+]

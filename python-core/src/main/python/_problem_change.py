@@ -1,16 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Optional, Callable, TYPE_CHECKING, Generic
 from types import FunctionType
-from _jpyinterpreter import (convert_to_java_python_like_object,
-                            unwrap_python_like_object,
-                            update_python_object_from_java,
-                            translate_python_bytecode_to_java_bytecode)
+from _jpyinterpreter import (
+    convert_to_java_python_like_object,
+    unwrap_python_like_object,
+    update_python_object_from_java,
+    translate_python_bytecode_to_java_bytecode,
+)
 from jpype import JOverride, JImplements
 
 if TYPE_CHECKING:
-    from ai.timefold.solver.core.api.solver.change import (ProblemChangeDirector as _ProblemChangeDirector)
+    from ai.timefold.solver.core.api.solver.change import (
+        ProblemChangeDirector as _ProblemChangeDirector,
+    )
 
-Solution_ = TypeVar('Solution_')
+Solution_ = TypeVar("Solution_")
 
 
 class ProblemChangeDirector:
@@ -23,17 +27,21 @@ class ProblemChangeDirector:
 
     To see an example implementation, please refer to the `ProblemChange` docstring.
     """
-    _delegate: '_ProblemChangeDirector'
+
+    _delegate: "_ProblemChangeDirector"
     _java_solution: Solution_
     _python_solution: Solution_
 
-    Entity = TypeVar('Entity')
-    ProblemFact = TypeVar('ProblemFact')
-    EntityOrProblemFact = TypeVar('EntityOrProblemFact')
+    Entity = TypeVar("Entity")
+    ProblemFact = TypeVar("ProblemFact")
+    EntityOrProblemFact = TypeVar("EntityOrProblemFact")
 
-    def __init__(self, delegate: '_ProblemChangeDirector',
-                 java_solution: Solution_,
-                 python_solution: Solution_):
+    def __init__(
+        self,
+        delegate: "_ProblemChangeDirector",
+        java_solution: Solution_,
+        python_solution: Solution_,
+    ):
         self._delegate = delegate
         self._java_solution = java_solution
         self._python_solution = python_solution
@@ -58,12 +66,18 @@ class ProblemChangeDirector:
             A callable that adds the entity to the working solution.
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.addEntity(convert_to_java_python_like_object(entity), converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.addEntity(
+            convert_to_java_python_like_object(entity), converted_modifier
+        )
         update_python_object_from_java(self._java_solution)
 
-    def add_problem_fact(self, fact: ProblemFact, modifier: Callable[[ProblemFact], None]) -> None:
+    def add_problem_fact(
+        self, fact: ProblemFact, modifier: Callable[[ProblemFact], None]
+    ) -> None:
         """
         Add a new problem fact instance into the ``working solution``.
 
@@ -75,13 +89,20 @@ class ProblemChangeDirector:
             A callable that adds the fact to the working solution.
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.addProblemFact(convert_to_java_python_like_object(fact), converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.addProblemFact(
+            convert_to_java_python_like_object(fact), converted_modifier
+        )
         update_python_object_from_java(self._java_solution)
 
-    def change_problem_property(self, problem_fact_or_entity: EntityOrProblemFact,
-                                modifier: Callable[[EntityOrProblemFact], None]) -> None:
+    def change_problem_property(
+        self,
+        problem_fact_or_entity: EntityOrProblemFact,
+        modifier: Callable[[EntityOrProblemFact], None],
+    ) -> None:
         """
         Change a property of either a ``planning_entity`` or a problem fact.
         Translates the entity or the problem fact to its working solution counterpart
@@ -95,14 +116,19 @@ class ProblemChangeDirector:
             Updates the property of the ``planning_entity`` or the problem fact
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.changeProblemProperty(convert_to_java_python_like_object(problem_fact_or_entity),
-                                             converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.changeProblemProperty(
+            convert_to_java_python_like_object(problem_fact_or_entity),
+            converted_modifier,
+        )
         update_python_object_from_java(self._java_solution)
 
-    def change_variable(self, entity: Entity, variable: str,
-                        modifier: Callable[[Entity], None]) -> None:
+    def change_variable(
+        self, entity: Entity, variable: str, modifier: Callable[[Entity], None]
+    ) -> None:
         """
         Change a ``PlanningVariable`` value of a ``planning_entity``.
         Translates the entity to a working planning entity
@@ -118,12 +144,18 @@ class ProblemChangeDirector:
             Updates the value of the ``PlanningVariable`` inside the ``planning_entity``
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.changeVariable(convert_to_java_python_like_object(entity), variable, converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.changeVariable(
+            convert_to_java_python_like_object(entity), variable, converted_modifier
+        )
         update_python_object_from_java(self._java_solution)
 
-    def lookup_working_object(self, external_object: EntityOrProblemFact) -> Optional[EntityOrProblemFact]:
+    def lookup_working_object(
+        self, external_object: EntityOrProblemFact
+    ) -> Optional[EntityOrProblemFact]:
         """
         As defined by `lookup_working_object_or_fail`,
         but doesn't fail fast if no working object was ever added for the `external_object`.
@@ -145,12 +177,16 @@ class ProblemChangeDirector:
         ------
         If it cannot be looked up or if the `external_object`'s class is not supported.
         """
-        out = self._delegate.lookUpWorkingObject(convert_to_java_python_like_object(external_object)).orElse(None)
+        out = self._delegate.lookUpWorkingObject(
+            convert_to_java_python_like_object(external_object)
+        ).orElse(None)
         if out is None:
             return None
         return unwrap_python_like_object(out)
 
-    def lookup_working_object_or_fail(self, external_object: EntityOrProblemFact) -> EntityOrProblemFact:
+    def lookup_working_object_or_fail(
+        self, external_object: EntityOrProblemFact
+    ) -> EntityOrProblemFact:
         """
         Translate an entity or fact instance (often from another Thread)
         to this `ProblemChangeDirector`'s internal working instance.
@@ -168,7 +204,9 @@ class ProblemChangeDirector:
         If there is no working object for `external_object`,
         if it cannot be looked up or if the `external_object`'s class is not supported.
         """
-        return unwrap_python_like_object(self._delegate.lookUpWorkingObjectOrFail(external_object))
+        return unwrap_python_like_object(
+            self._delegate.lookUpWorkingObjectOrFail(external_object)
+        )
 
     def remove_entity(self, entity: Entity, modifier: Callable[[Entity], None]) -> None:
         """
@@ -184,12 +222,18 @@ class ProblemChangeDirector:
             Removes the working entity from the ``working solution``.
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.removeEntity(convert_to_java_python_like_object(entity), converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.removeEntity(
+            convert_to_java_python_like_object(entity), converted_modifier
+        )
         update_python_object_from_java(self._java_solution)
 
-    def remove_problem_fact(self, fact: ProblemFact, modifier: Callable[[ProblemFact], None]) -> None:
+    def remove_problem_fact(
+        self, fact: ProblemFact, modifier: Callable[[ProblemFact], None]
+    ) -> None:
         """
         Remove an existing problem fact instance from the ``working solution``.
         Translates the problem fact to its working solution counterpart
@@ -203,9 +247,13 @@ class ProblemChangeDirector:
             Removes the working problem fact from the ``working solution``.
         """
         from java.util.function import Consumer
-        converted_modifier = translate_python_bytecode_to_java_bytecode(self._replace_solution_in_callable(modifier),
-                                                                        Consumer)
-        self._delegate.removeProblemFact(convert_to_java_python_like_object(fact), converted_modifier)
+
+        converted_modifier = translate_python_bytecode_to_java_bytecode(
+            self._replace_solution_in_callable(modifier), Consumer
+        )
+        self._delegate.removeProblemFact(
+            convert_to_java_python_like_object(fact), converted_modifier
+        )
         update_python_object_from_java(self._java_solution)
 
     def update_shadow_variables(self) -> None:
@@ -236,7 +284,7 @@ class ProblemChange(Generic[Solution_], ABC):
     Examples
     --------
     An example implementation, based on the Cloud balancing problem, looks as follows:
-    >>> from timefold.solver import ProblemChange
+    >>> from blackops_legacy.solver import ProblemChange
     >>> from domain import CloudBalance, CloudComputer
     >>>
     >>> class DeleteComputerProblemChange(ProblemChange[CloudBalance]):
@@ -260,8 +308,13 @@ class ProblemChange(Generic[Solution_], ABC):
     ...         # Remove the problem fact itself
     ...         problem_change_director.remove_problem_fact(working_computer, computer_list.remove)
     """
+
     @abstractmethod
-    def do_change(self, working_solution: Solution_, problem_change_director: ProblemChangeDirector) -> None:
+    def do_change(
+        self,
+        working_solution: Solution_,
+        problem_change_director: ProblemChangeDirector,
+    ) -> None:
         """
         Do the change on the `planning_solution`.
         Every modification to the `planning_solution` must be done via the `ProblemChangeDirector`,
@@ -277,7 +330,7 @@ class ProblemChange(Generic[Solution_], ABC):
         ...
 
 
-@JImplements('ai.timefold.solver.core.api.solver.change.ProblemChange', deferred=True)
+@JImplements("ai.timefold.solver.core.api.solver.change.ProblemChange", deferred=True)
 class ProblemChangeWrapper:
     _delegate: ProblemChange
 
@@ -285,11 +338,15 @@ class ProblemChangeWrapper:
         self._delegate = delegate
 
     @JOverride
-    def doChange(self, working_solution, problem_change_director: '_ProblemChangeDirector') -> None:
-        wrapped_problem_change_director = ProblemChangeDirector(problem_change_director,
-                                                                working_solution,
-                                                                unwrap_python_like_object(working_solution))
+    def doChange(
+        self, working_solution, problem_change_director: "_ProblemChangeDirector"
+    ) -> None:
+        wrapped_problem_change_director = ProblemChangeDirector(
+            problem_change_director,
+            working_solution,
+            unwrap_python_like_object(working_solution),
+        )
         self._delegate.do_change(working_solution, wrapped_problem_change_director)
 
 
-__all__ = ['ProblemChange', 'ProblemChangeDirector']
+__all__ = ["ProblemChange", "ProblemChangeDirector"]

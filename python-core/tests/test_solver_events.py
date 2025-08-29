@@ -1,7 +1,7 @@
-from timefold.solver import *
-from timefold.solver.domain import *
-from timefold.solver.config import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.score import *
 
 from dataclasses import dataclass, field
 from typing import Annotated, List
@@ -18,8 +18,8 @@ def test_solver_events():
     def my_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-                              .reward(SimpleScore.ONE, lambda entity: entity.value)
-                              .as_constraint('Maximize value'),
+            .reward(SimpleScore.ONE, lambda entity: entity.value)
+            .as_constraint("Maximize value"),
         ]
 
     @planning_solution
@@ -35,12 +35,10 @@ def test_solver_events():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             constraint_provider_function=my_constraints,
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='6'
-        )
+        termination_config=TerminationConfig(best_score_limit="6"),
     )
 
-    problem: Solution = Solution([Entity('A'), Entity('B')], [1, 2, 3])
+    problem: Solution = Solution([Entity("A"), Entity("B")], [1, 2, 3])
     score_list = []
     solution_list = []
 

@@ -1,5 +1,5 @@
 from ..score import ConstraintFactory, Constraint, IncrementalScoreCalculator
-from .._timefold_java_interop import is_enterprise_installed
+from .._blackops_java_interop import is_enterprise_installed
 
 from typing import Any, Optional, Callable, TypeVar, Generic, Literal, TYPE_CHECKING
 from dataclasses import dataclass, field
@@ -10,13 +10,18 @@ from jpype import JClass
 if TYPE_CHECKING:
     from java.time import Duration as _JavaDuration
     from ai.timefold.solver.core.config.solver import SolverConfig as _JavaSolverConfig
-    from ai.timefold.solver.core.config.solver.termination import TerminationConfig as _JavaTerminationConfig
+    from ai.timefold.solver.core.config.solver.termination import (
+        TerminationConfig as _JavaTerminationConfig,
+    )
     from ai.timefold.solver.core.config.score.director import (
-        ScoreDirectorFactoryConfig as _JavaScoreDirectorFactoryConfig)
+        ScoreDirectorFactoryConfig as _JavaScoreDirectorFactoryConfig,
+    )
 
 
-_java_environment_mode = 'ai.timefold.solver.core.config.solver.EnvironmentMode'
-_java_termination_composition_style = 'ai.timefold.solver.core.config.solver.termination.TerminationCompositionStyle'
+_java_environment_mode = "ai.timefold.solver.core.config.solver.EnvironmentMode"
+_java_termination_composition_style = (
+    "ai.timefold.solver.core.config.solver.termination.TerminationCompositionStyle"
+)
 
 
 def _lookup_on_java_class(java_class: str, attribute: str) -> Any:
@@ -28,6 +33,7 @@ class Duration:
     """
     Represents a duration of time.
     """
+
     milliseconds: int = field(default=0)
     seconds: int = field(default=0)
     minutes: int = field(default=0)
@@ -50,20 +56,19 @@ class Duration:
         return self._to_java_duration().toDays()
 
     @staticmethod
-    def _from_java_duration(duration: '_JavaDuration'):
-        return Duration(
-            milliseconds=duration.toMillis()
-        )
+    def _from_java_duration(duration: "_JavaDuration"):
+        return Duration(milliseconds=duration.toMillis())
 
-    def _to_java_duration(self) -> '_JavaDuration':
+    def _to_java_duration(self) -> "_JavaDuration":
         from java.time import Duration
-        return (Duration.ZERO
-                .plusMillis(self.milliseconds)
-                .plusSeconds(self.seconds)
-                .plusMinutes(self.minutes)
-                .plusHours(self.hours)
-                .plusDays(self.days)
-                )
+
+        return (
+            Duration.ZERO.plusMillis(self.milliseconds)
+            .plusSeconds(self.seconds)
+            .plusMinutes(self.minutes)
+            .plusHours(self.hours)
+            .plusDays(self.days)
+        )
 
 
 class EnvironmentMode(Enum):
@@ -76,7 +81,7 @@ class EnvironmentMode(Enum):
     This environment mode influences the seed of that Random instance.
     """
 
-    NON_REPRODUCIBLE = 'NON_REPRODUCIBLE'
+    NON_REPRODUCIBLE = "NON_REPRODUCIBLE"
     """
     The non reproducible mode is equally fast or slightly faster than NO_ASSERT.
     The random seed is different on every run,
@@ -87,13 +92,13 @@ class EnvironmentMode(Enum):
     In multithreaded scenarios, this mode allows the use of work stealing and other non deterministic speed tricks.
     """
 
-    NO_ASSERT = 'NO_ASSERT'
+    NO_ASSERT = "NO_ASSERT"
     """
     As defined by REPRODUCIBLE,
     but negligibly faster on account of disabling all error detection.
     """
 
-    PHASE_ASSERT = 'PHASE_ASSERT'
+    PHASE_ASSERT = "PHASE_ASSERT"
     """
     The is the default mode because it is recommended during development.
     In this mode, 2 runs on the same computer will execute the same code in the same order.
@@ -101,14 +106,14 @@ class EnvironmentMode(Enum):
     except if they use a time based termination and they have a sufficiently large difference in allocated CPU time.
     This allows you to benchmark new optimizations (such as a new Move implementation)
     fairly and reproduce bugs in your code reliably.
-    
+
     Warning: some code can disrupt reproducibility regardless of this mode.
     See the reference manual for more info.
     In practice, this mode uses the default random seed,
     and it also disables certain concurrency optimizations (such as work stealing).
     """
 
-    STEP_ASSERT = 'STEP_ASSERT'
+    STEP_ASSERT = "STEP_ASSERT"
     """
     This mode turns on several assertions (but not all of them) to fail-fast on a bug in a Move implementation,
     a constraint rule, the engine itself or something else at a reasonable performance cost (in development at least).
@@ -117,7 +122,7 @@ class EnvironmentMode(Enum):
     This mode is slow.
     """
 
-    NON_INTRUSIVE_FULL_ASSERT = 'NON_INTRUSIVE_FULL_ASSERT'
+    NON_INTRUSIVE_FULL_ASSERT = "NON_INTRUSIVE_FULL_ASSERT"
     """
     This mode turns on several assertions (but not all of them) to fail-fast on a bug in a Move implementation,
     a constraint, the engine itself or something else at an overwhelming performance cost.
@@ -126,7 +131,7 @@ class EnvironmentMode(Enum):
     This mode is horribly slow.
     """
 
-    FULL_ASSERT = 'FULL_ASSERT'
+    FULL_ASSERT = "FULL_ASSERT"
     """
     This mode turns on all assertions to fail-fast on a bug in a Move implementation,
     a constraint, the engine itself or something else at a horrible performance cost.
@@ -135,7 +140,7 @@ class EnvironmentMode(Enum):
     This mode is horribly slow.
     """
 
-    TRACKED_FULL_ASSERT = 'TRACKED_FULL_ASSERT'
+    TRACKED_FULL_ASSERT = "TRACKED_FULL_ASSERT"
     """
     This mode turns on FULL_ASSERT and enables variable tracking to fail-fast on a bug in a Move implementation,
     a constraint, the engine itself or something else at the highest performance cost.
@@ -151,21 +156,21 @@ class EnvironmentMode(Enum):
 
 
 class TerminationCompositionStyle(Enum):
-    OR = 'OR'
-    AND = 'AND'
+    OR = "OR"
+    AND = "AND"
 
     def _get_java_enum(self):
         return _lookup_on_java_class(_java_termination_composition_style, self.name)
 
 
 class MoveThreadCount(Enum):
-    AUTO = 'AUTO'
+    AUTO = "AUTO"
     """
     Configure the number of move threads dynamically based on the
     computer's core count.
     """
 
-    NONE = 'NONE'
+    NONE = "NONE"
     """
     Disables multithreaded solving.
     """
@@ -173,13 +178,15 @@ class MoveThreadCount(Enum):
 
 class RequiresEnterpriseError(EnvironmentError):
     def __init__(self, feature):
-        super().__init__(f'Feature {feature} requires timefold-enterprise to be installed. '
-                         f'See https://docs.timefold.ai/timefold-solver/latest/enterprise-edition/'
-                         f'enterprise-edition#switchToEnterpriseEdition for instructions on how to '
-                         f'install timefold-enterprise.')
+        super().__init__(
+            f"Feature {feature} requires timefold-enterprise to be installed. "
+            f"See https://docs.timefold.ai/timefold-solver/latest/enterprise-edition/"
+            f"enterprise-edition#switchToEnterpriseEdition for instructions on how to "
+            f"install timefold-enterprise."
+        )
 
 
-Solution_ = TypeVar('Solution_')
+Solution_ = TypeVar("Solution_")
 
 
 @dataclass(kw_only=True)
@@ -188,28 +195,41 @@ class SolverConfig(Generic[Solution_]):
     To read it from XML, use `create_from_xml_resource`.
     To build a `SolverFactory` with it, use `SolverFactory.create`.
     """
+
     solution_class: Optional[type[Solution_]] = field(default=None)
     entity_class_list: Optional[list[type]] = field(default=None)
-    environment_mode: Optional[EnvironmentMode] = field(default=EnvironmentMode.PHASE_ASSERT)
+    environment_mode: Optional[EnvironmentMode] = field(
+        default=EnvironmentMode.PHASE_ASSERT
+    )
     random_seed: Optional[int] = field(default=None)
     move_thread_count: int | MoveThreadCount = field(default=MoveThreadCount.NONE)
-    nearby_distance_meter_function: Optional[Callable[[Any, Any], float]] = field(default=None)
-    termination_config: Optional['TerminationConfig'] = field(default=None)
-    score_director_factory_config: Optional['ScoreDirectorFactoryConfig'] = field(default=None)
+    nearby_distance_meter_function: Optional[Callable[[Any, Any], float]] = field(
+        default=None
+    )
+    termination_config: Optional["TerminationConfig"] = field(default=None)
+    score_director_factory_config: Optional["ScoreDirectorFactoryConfig"] = field(
+        default=None
+    )
     xml_source_text: Optional[str] = field(default=None)
     xml_source_file: Optional[Path] = field(default=None)
 
     @staticmethod
-    def create_from_xml_resource(path: Path) -> 'SolverConfig':
+    def create_from_xml_resource(path: Path) -> "SolverConfig":
         return SolverConfig(xml_source_file=path)
 
     @staticmethod
-    def create_from_xml_text(xml_text: str) -> 'SolverConfig':
+    def create_from_xml_text(xml_text: str) -> "SolverConfig":
         return SolverConfig(xml_source_text=xml_text)
 
-    def _to_java_solver_config(self) -> '_JavaSolverConfig':
-        from .._timefold_java_interop import OverrideClassLoader, get_class, _process_compilation_queue
-        from ai.timefold.solver.core.config.solver import SolverConfig as JavaSolverConfig
+    def _to_java_solver_config(self) -> "_JavaSolverConfig":
+        from .._blackops_java_interop import (
+            OverrideClassLoader,
+            get_class,
+            _process_compilation_queue,
+        )
+        from ai.timefold.solver.core.config.solver import (
+            SolverConfig as JavaSolverConfig,
+        )
         from java.io import File, ByteArrayInputStream  # noqa
         from java.lang import IllegalArgumentException
         from java.util import ArrayList
@@ -222,11 +242,14 @@ class SolverConfig(Generic[Solution_]):
             # First, inherit the config from the xml text/file
             if self.xml_source_text is not None:
                 inherited = JavaSolverConfig.createFromXmlInputStream(
-                    ByteArrayInputStream(self.xml_source_text.encode()))
+                    ByteArrayInputStream(self.xml_source_text.encode())
+                )
                 out.inherit(inherited)
             if self.xml_source_file is not None:
                 try:
-                    inherited = JavaSolverConfig.createFromXmlFile(File(str(self.xml_source_file)))
+                    inherited = JavaSolverConfig.createFromXmlFile(
+                        File(str(self.xml_source_file))
+                    )
                     out.inherit(inherited)
                 except IllegalArgumentException as e:
                     raise FileNotFoundError(e.getMessage()) from e
@@ -234,41 +257,60 @@ class SolverConfig(Generic[Solution_]):
             # Next, override fields
             if self.move_thread_count is not MoveThreadCount.NONE:
                 if not is_enterprise_installed():
-                    raise RequiresEnterpriseError('multithreaded solving')
+                    raise RequiresEnterpriseError("multithreaded solving")
                 if isinstance(self.move_thread_count, MoveThreadCount):
                     out.setMoveThreadCount(self.move_thread_count.name)
                 else:
                     out.setMoveThreadCount(str(self.move_thread_count))
             elif out.getMoveThreadCount() is not None and not is_enterprise_installed():
-                raise RequiresEnterpriseError('multithreaded solving')
+                raise RequiresEnterpriseError("multithreaded solving")
 
             if self.nearby_distance_meter_function is not None:
                 if not is_enterprise_installed():
-                    raise RequiresEnterpriseError('nearby selection')
-                out.setNearbyDistanceMeterClass(get_class(self.nearby_distance_meter_function))
-            elif out.getNearbyDistanceMeterClass() is not None and not is_enterprise_installed():
-                raise RequiresEnterpriseError('nearby selection')
+                    raise RequiresEnterpriseError("nearby selection")
+                out.setNearbyDistanceMeterClass(
+                    get_class(self.nearby_distance_meter_function)
+                )
+            elif (
+                out.getNearbyDistanceMeterClass() is not None
+                and not is_enterprise_installed()
+            ):
+                raise RequiresEnterpriseError("nearby selection")
 
             if self.solution_class is not None:
-                from ai.timefold.solver.core.api.domain.solution import PlanningSolution as JavaPlanningSolution
+                from ai.timefold.solver.core.api.domain.solution import (
+                    PlanningSolution as JavaPlanningSolution,
+                )
+
                 java_class = get_class(self.solution_class)
                 if java_class is None:
-                    raise RuntimeError(f'Unable to generate Java class for {self.solution_class}')
+                    raise RuntimeError(
+                        f"Unable to generate Java class for {self.solution_class}"
+                    )
                 if java_class.getAnnotation(JavaPlanningSolution) is None:
-                    raise TypeError(f'{self.solution_class} is not a @planning_solution class. '
-                                    f'Maybe move the @planning_solution decorator to the top of the decorator list?')
+                    raise TypeError(
+                        f"{self.solution_class} is not a @planning_solution class. "
+                        f"Maybe move the @planning_solution decorator to the top of the decorator list?"
+                    )
                 out.setSolutionClass(get_class(self.solution_class))
 
             if self.entity_class_list is not None:
-                from ai.timefold.solver.core.api.domain.entity import PlanningEntity as JavaPlanningEntity
+                from ai.timefold.solver.core.api.domain.entity import (
+                    PlanningEntity as JavaPlanningEntity,
+                )
+
                 entity_class_list = ArrayList()
                 for entity_class in self.entity_class_list:
                     java_class = get_class(entity_class)
                     if java_class is None:
-                        raise RuntimeError(f'Unable to generate Java class for {entity_class}')
+                        raise RuntimeError(
+                            f"Unable to generate Java class for {entity_class}"
+                        )
                     if java_class.getAnnotation(JavaPlanningEntity) is None:
-                        raise TypeError(f'{entity_class} is not a @planning_entity class. '
-                                        f'Maybe move the @planning_entity decorator to the top of the decorator list?')
+                        raise TypeError(
+                            f"{entity_class} is not a @planning_entity class. "
+                            f"Maybe move the @planning_entity decorator to the top of the decorator list?"
+                        )
                     entity_class_list.add(java_class)
                 out.setEntityClassList(entity_class_list)
 
@@ -280,40 +322,58 @@ class SolverConfig(Generic[Solution_]):
 
             if self.score_director_factory_config is not None:
                 out.setScoreDirectorFactoryConfig(
-                    self.score_director_factory_config._to_java_score_director_factory_config())
+                    self.score_director_factory_config._to_java_score_director_factory_config()
+                )
 
             if self.termination_config is not None:
                 out.setTerminationConfig(
-                    self.termination_config._to_java_termination_config(out.getTerminationConfig()))
+                    self.termination_config._to_java_termination_config(
+                        out.getTerminationConfig()
+                    )
+                )
 
             return out
 
 
 @dataclass(kw_only=True)
 class ScoreDirectorFactoryConfig:
-    constraint_provider_function: Optional[Callable[[ConstraintFactory], list[Constraint]]] =\
-        field(default=None)
+    constraint_provider_function: Optional[
+        Callable[[ConstraintFactory], list[Constraint]]
+    ] = field(default=None)
     easy_score_calculator_function: Optional[Callable] = field(default=None)
-    incremental_score_calculator_class: Optional[type[IncrementalScoreCalculator]] = field(default=None)
+    incremental_score_calculator_class: Optional[
+        type[IncrementalScoreCalculator]
+    ] = field(default=None)
 
-    def _to_java_score_director_factory_config(self, inherited_config: '_JavaScoreDirectorFactoryConfig' = None):
+    def _to_java_score_director_factory_config(
+        self, inherited_config: "_JavaScoreDirectorFactoryConfig" = None
+    ):
         from ai.timefold.solver.core.config.score.director import (
-            ScoreDirectorFactoryConfig as JavaScoreDirectorFactoryConfig)
-        from .._timefold_java_interop import get_class
+            ScoreDirectorFactoryConfig as JavaScoreDirectorFactoryConfig,
+        )
+        from .._blackops_java_interop import get_class
+
         out = JavaScoreDirectorFactoryConfig()
         if inherited_config is not None:
             out.inherit(inherited_config)
         if self.constraint_provider_function is not None:
             from ai.timefold.solver.core.api.score.stream import ConstraintProvider
+
             java_class = get_class(self.constraint_provider_function)
             if not issubclass(java_class, ConstraintProvider):
-                raise TypeError(f'{self.constraint_provider_function} is not a @constraint_provider function. '
-                                f'Maybe move the @constraint_provider decorator to the top of the decorator list?')
+                raise TypeError(
+                    f"{self.constraint_provider_function} is not a @constraint_provider function. "
+                    f"Maybe move the @constraint_provider decorator to the top of the decorator list?"
+                )
             out.setConstraintProviderClass(java_class)  # noqa
         if self.easy_score_calculator_function is not None:
-            out.setEasyScoreCalculatorClass(get_class(self.easy_score_calculator_function))  # noqa
+            out.setEasyScoreCalculatorClass(
+                get_class(self.easy_score_calculator_function)
+            )  # noqa
         if self.incremental_score_calculator_class is not None:
-            out.setIncrementalScoreCalculatorClass(get_class(self.incremental_score_calculator_class))  # noqa
+            out.setIncrementalScoreCalculatorClass(
+                get_class(self.incremental_score_calculator_class)
+            )  # noqa
         return out
 
 
@@ -327,13 +387,19 @@ class TerminationConfig:
     unimproved_spent_limit: Optional[Duration] = field(default=None)
     unimproved_score_difference_threshold: Optional[str] = field(default=None)
     unimproved_step_count_limit: Optional[int] = field(default=None)
-    termination_config_list: Optional[list['TerminationConfig']] = field(default=None)
-    termination_composition_style: Optional[TerminationCompositionStyle] = field(default=None)
+    termination_config_list: Optional[list["TerminationConfig"]] = field(default=None)
+    termination_composition_style: Optional[TerminationCompositionStyle] = field(
+        default=None
+    )
 
-    def _to_java_termination_config(self, inherited_config: '_JavaTerminationConfig' = None) -> \
-            '_JavaTerminationConfig':
+    def _to_java_termination_config(
+        self, inherited_config: "_JavaTerminationConfig" = None
+    ) -> "_JavaTerminationConfig":
         from java.util import ArrayList
-        from ai.timefold.solver.core.config.solver.termination import TerminationConfig as JavaTerminationConfig
+        from ai.timefold.solver.core.config.solver.termination import (
+            TerminationConfig as JavaTerminationConfig,
+        )
+
         out = JavaTerminationConfig()
         if inherited_config is not None:
             out.inherit(inherited_config)
@@ -351,16 +417,22 @@ class TerminationConfig:
         if self.unimproved_spent_limit is not None:
             out.setUnimprovedSpentLimit(self.unimproved_spent_limit._to_java_duration())
         if self.unimproved_score_difference_threshold is not None:
-            out.setUnimprovedScoreDifferenceThreshold(self.unimproved_score_difference_threshold)
+            out.setUnimprovedScoreDifferenceThreshold(
+                self.unimproved_score_difference_threshold
+            )
         if self.unimproved_step_count_limit is not None:
             out.setUnimprovedStepCountLimit(self.unimproved_step_count_limit)
         if self.termination_config_list is not None:
             termination_config_list = ArrayList()
             for termination_config in self.termination_config_list:
-                termination_config_list.add(termination_config._to_java_termination_config())
+                termination_config_list.add(
+                    termination_config._to_java_termination_config()
+                )
             out.setTerminationConfigList(termination_config_list)
         if self.termination_composition_style is not None:
-            out.setTerminationCompositionStyle(self.termination_composition_style._get_java_enum())
+            out.setTerminationCompositionStyle(
+                self.termination_composition_style._get_java_enum()
+            )
         return out
 
 
@@ -374,13 +446,17 @@ class SolverConfigOverride:
     termination_config: TerminationConfig, optional
         sets the solver TerminationConfig.
     """
+
     termination_config: Optional[TerminationConfig] = field(default=None)
 
     def _to_java_solver_config_override(self):
         from ai.timefold.solver.core.api.solver import SolverConfigOverride
+
         out = SolverConfigOverride()
         if self.termination_config is not None:
-            out = out.withTerminationConfig(self.termination_config._to_java_termination_config())
+            out = out.withTerminationConfig(
+                self.termination_config._to_java_termination_config()
+            )
         return out
 
 
@@ -397,16 +473,29 @@ class SolverManagerConfig:
         If unset or set to 'AUTO', the number of parallel jobs is determined
         based on the number of CPU cores available.
     """
-    parallel_solver_count: Optional[int | Literal['AUTO']] = field(default=None)
+
+    parallel_solver_count: Optional[int | Literal["AUTO"]] = field(default=None)
 
     def _to_java_solver_manager_config(self):
-        from ai.timefold.solver.core.config.solver import SolverManagerConfig as JavaSolverManagerConfig
+        from ai.timefold.solver.core.config.solver import (
+            SolverManagerConfig as JavaSolverManagerConfig,
+        )
+
         out = JavaSolverManagerConfig()
         if self.parallel_solver_count is not None:
             out = out.withParallelSolverCount(str(self.parallel_solver_count))
         return out
 
 
-__all__ = ['Duration', 'EnvironmentMode', 'TerminationCompositionStyle',
-           'RequiresEnterpriseError', 'MoveThreadCount', 'SolverManagerConfig',
-           'SolverConfig', 'SolverConfigOverride', 'ScoreDirectorFactoryConfig', 'TerminationConfig']
+__all__ = [
+    "Duration",
+    "EnvironmentMode",
+    "TerminationCompositionStyle",
+    "RequiresEnterpriseError",
+    "MoveThreadCount",
+    "SolverManagerConfig",
+    "SolverConfig",
+    "SolverConfigOverride",
+    "ScoreDirectorFactoryConfig",
+    "TerminationConfig",
+]

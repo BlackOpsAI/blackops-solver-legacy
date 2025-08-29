@@ -1,6 +1,7 @@
 target
 local
 __pycache__
+.pytest_cache
 /*.egg-info
 /**/dist
 /**/*.egg-info
@@ -21,6 +22,12 @@ __pycache__
 
 # VSCode
 *.code-workspace
+
+# Zed
+*.zed
+
+# Tox
+*.tox
 
 # Repository wide ignore mac DS_Store files
 .DS_Store

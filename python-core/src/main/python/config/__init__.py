@@ -3,8 +3,8 @@ Classes used to configure the `Solver`.
 
 Examples
 --------
->>> from timefold.solver.config import (SolverConfig, ScoreDirectorFactoryConfig,
-...                                     TerminationConfig, Duration)
+>>> from blackops_legacy.solver.config import (SolverConfig, ScoreDirectorFactoryConfig,
+...                                            TerminationConfig, Duration)
 >>> from domain import Timetable, Lesson
 >>> from constraints import my_constraints
 >>>

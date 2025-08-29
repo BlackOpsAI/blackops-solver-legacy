@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from timefold.solver import *
-from timefold.solver.config import *
-from timefold.solver.domain import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.score import *
 from typing import Annotated, List
 
 
@@ -24,8 +24,8 @@ def test_planning_pin():
     def my_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Point)
-                              .penalize(SimpleScore.ONE, lambda point: point.value)
-                              .as_constraint('Minimize Value')
+            .penalize(SimpleScore.ONE, lambda point: point.value)
+            .as_constraint("Minimize Value")
         ]
 
     solver_config = SolverConfig(
@@ -36,14 +36,11 @@ def test_planning_pin():
         ),
         termination_config=TerminationConfig(
             unimproved_spent_limit=Duration(milliseconds=100)
-        )
+        ),
     )
-    problem: Solution = Solution([0, 1, 2],
-                                 [
-                                     Point(0),
-                                     Point(1),
-                                     Point(2, is_pinned=True)
-                                 ])
+    problem: Solution = Solution(
+        [0, 1, 2], [Point(0), Point(1), Point(2, is_pinned=True)]
+    )
     solver = SolverFactory.create(solver_config).build_solver()
     solution = solver.solve(problem)
     assert solution.score.score == -2
@@ -74,7 +71,7 @@ def test_planning_pin_to_index():
         return [
             constraint_factory.for_each(Point)
             .penalize(SimpleScore.ONE, penalty_function)
-            .as_constraint('Minimize Value')
+            .as_constraint("Minimize Value")
         ]
 
     solver_config = SolverConfig(
@@ -85,13 +82,15 @@ def test_planning_pin_to_index():
         ),
         termination_config=TerminationConfig(
             unimproved_spent_limit=Duration(milliseconds=100)
-        )
+        ),
     )
-    problem: Solution = Solution([0, 1, 2],
-                                 [
-                                     Point([0, 2], unpinned_start=2),
-                                     Point([1]),
-                                 ])
+    problem: Solution = Solution(
+        [0, 1, 2],
+        [
+            Point([0, 2], unpinned_start=2),
+            Point([1]),
+        ],
+    )
     solver = SolverFactory.create(solver_config).build_solver()
     solution = solver.solve(problem)
     assert solution.score.score == -2

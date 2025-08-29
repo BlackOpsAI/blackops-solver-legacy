@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from timefold.solver import *
-from timefold.solver.config import *
-from timefold.solver.domain import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.score import *
 from typing import Annotated, List
 
 
@@ -17,8 +17,8 @@ def test_solver_configuration():
     def my_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-                              .reward(SimpleScore.ONE, lambda entity: entity.value)
-            .as_constraint('maximize_value'),
+            .reward(SimpleScore.ONE, lambda entity: entity.value)
+            .as_constraint("maximize_value"),
         ]
 
     @planning_solution
@@ -36,15 +36,12 @@ def test_solver_configuration():
             constraint_provider_function=my_constraints,
         ),
         termination_config=TerminationConfig(
-            best_score_limit='6',
-            spent_limit=Duration(seconds=1)
-        )
+            best_score_limit="6", spent_limit=Duration(seconds=1)
+        ),
     )
 
-    overrides = ConstraintWeightOverrides({
-        "maximize_value": SimpleScore.of(2)
-    })
-    problem: Solution = Solution([Entity('A')], [1, 2, 3], weight_overrides=overrides)
+    overrides = ConstraintWeightOverrides({"maximize_value": SimpleScore.of(2)})
+    problem: Solution = Solution([Entity("A")], [1, 2, 3], weight_overrides=overrides)
 
     solver = SolverFactory.create(solver_config).build_solver()
     solution = solver.solve(problem)

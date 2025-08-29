@@ -16,8 +16,8 @@ Planning problems are defined using Python classes and functions.
 
 Examples
 --------
->>> from timefold.solver import Solver, SolverFactory
->>> from timefold.solver.config import (SolverConfig, ScoreDirectorFactoryConfig,
+>>> from blackops_legacy.solver import Solver, SolverFactory
+>>> from blackops_legacy.solver.config import (SolverConfig, ScoreDirectorFactoryConfig,
 ...                                     TerminationConfig, Duration)
 >>> from domain import Timetable, Lesson, generate_problem
 >>> from constraints import my_constraints
@@ -35,10 +35,10 @@ Examples
 
 See Also
 --------
-:mod:`timefold.solver.config`
-:mod:`timefold.solver.domain`
-:mod:`timefold.solver.score`
-:mod:`timefold.solver.test`
+:mod:`blackops_legacy.solver.config`
+:mod:`blackops_legacy.solver.domain`
+:mod:`blackops_legacy.solver.score`
+:mod:`blackops_legacy.solver.test`
 """
 from ._problem_change import *
 from ._solution_manager import *
@@ -46,10 +46,10 @@ from ._solver import *
 from ._solver_factory import *
 from ._solver_manager import *
 
-import timefold.solver.config as config
-import timefold.solver.domain as domain
-import timefold.solver.heuristic as heuristic
-import timefold.solver.score as score
-import timefold.solver.test as test
+import blackops_legacy.solver.config as config
+import blackops_legacy.solver.domain as domain
+import blackops_legacy.solver.heuristic as heuristic
+import blackops_legacy.solver.score as score
+import blackops_legacy.solver.test as test
 
-from ._timefold_java_interop import init, set_class_output_directory
+from ._blackops_java_interop import init, set_class_output_directory

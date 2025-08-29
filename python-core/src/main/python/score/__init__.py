@@ -3,7 +3,7 @@ Classes and decorators used to define constraints.
 
 Examples
 --------
->>> from timefold.solver.score import ConstraintFactory, Constraint, Joiners, HardSoftScore, constraint_provider
+>>> from blackops_legacy.solver.score import ConstraintFactory, Constraint, Joiners, HardSoftScore, constraint_provider
 >>> from domain import Lesson
 >>>
 >>> @constraint_provider

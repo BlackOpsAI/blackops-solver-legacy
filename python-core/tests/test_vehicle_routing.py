@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from timefold.solver import *
-from timefold.solver.config import *
-from timefold.solver.domain import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.score import *
 from typing import Annotated, Optional
 
 
@@ -13,7 +13,7 @@ class Location:
     longitude: float
     driving_time_seconds: dict[int, int] = field(default_factory=dict)
 
-    def driving_time_to(self, other: 'Location') -> int:
+    def driving_time_to(self, other: "Location") -> int:
         return self.driving_time_seconds[id(other)]
 
 
@@ -27,25 +27,34 @@ class Visit:
     min_start_time: datetime
     max_end_time: datetime
     service_duration: timedelta
-    vehicle: Annotated[Optional['Vehicle'], InverseRelationShadowVariable(source_variable_name='visits')] = (
-        field(default=None))
-    previous_visit: Annotated[Optional['Visit'], PreviousElementShadowVariable(source_variable_name='visits')] = (
-        field(default=None))
-    next_visit: Annotated[Optional['Visit'], NextElementShadowVariable(source_variable_name='visits')] = field(
-        default=None)
+    vehicle: Annotated[
+        Optional["Vehicle"],
+        InverseRelationShadowVariable(source_variable_name="visits"),
+    ] = field(default=None)
+    previous_visit: Annotated[
+        Optional["Visit"], PreviousElementShadowVariable(source_variable_name="visits")
+    ] = field(default=None)
+    next_visit: Annotated[
+        Optional["Visit"], NextElementShadowVariable(source_variable_name="visits")
+    ] = field(default=None)
     arrival_time: Annotated[
         Optional[datetime],
-        CascadingUpdateShadowVariable(target_method_name='update_arrival_time')] = field(default=None)
+        CascadingUpdateShadowVariable(target_method_name="update_arrival_time"),
+    ] = field(default=None)
 
     def update_arrival_time(self):
-        if self.vehicle is None or (self.previous_visit is not None and self.previous_visit.arrival_time is None):
+        if self.vehicle is None or (
+            self.previous_visit is not None and self.previous_visit.arrival_time is None
+        ):
             self.arrival_time = None
         elif self.previous_visit is None:
-            self.arrival_time = (self.vehicle.departure_time +
-                                 timedelta(seconds=self.vehicle.home_location.driving_time_to(self.location)))
+            self.arrival_time = self.vehicle.departure_time + timedelta(
+                seconds=self.vehicle.home_location.driving_time_to(self.location)
+            )
         else:
-            self.arrival_time = (self.previous_visit.departure_time() +
-                                 timedelta(seconds=self.previous_visit.location.driving_time_to(self.location)))
+            self.arrival_time = self.previous_visit.departure_time() + timedelta(
+                seconds=self.previous_visit.location.driving_time_to(self.location)
+            )
 
     def departure_time(self) -> Optional[datetime]:
         if self.arrival_time is None:
@@ -56,10 +65,16 @@ class Visit:
     def start_service_time(self) -> Optional[datetime]:
         if self.arrival_time is None:
             return None
-        return self.min_start_time if (self.min_start_time < self.arrival_time) else self.arrival_time
+        return (
+            self.min_start_time
+            if (self.min_start_time < self.arrival_time)
+            else self.arrival_time
+        )
 
     def is_service_finished_after_max_end_time(self) -> bool:
-        return self.arrival_time is not None and self.departure_time() > self.max_end_time
+        return (
+            self.arrival_time is not None and self.departure_time() > self.max_end_time
+        )
 
     def service_finished_delay_in_minutes(self) -> int:
         if self.arrival_time is None:
@@ -68,7 +83,9 @@ class Visit:
 
     def driving_time_seconds_from_previous_standstill(self) -> int:
         if self.vehicle is None:
-            raise ValueError("This method must not be called when the shadow variables are not initialized yet.")
+            raise ValueError(
+                "This method must not be called when the shadow variables are not initialized yet."
+            )
 
         if self.previous_visit is None:
             return self.vehicle.home_location.driving_time_to(self.location)
@@ -106,10 +123,14 @@ class Vehicle:
         previous_location = self.home_location
 
         for visit in self.visits:
-            total_driving_time_seconds += previous_location.driving_time_to(visit.location)
+            total_driving_time_seconds += previous_location.driving_time_to(
+                visit.location
+            )
             previous_location = visit.location
 
-        total_driving_time_seconds += previous_location.driving_time_to(self.home_location)
+        total_driving_time_seconds += previous_location.driving_time_to(
+            self.home_location
+        )
         return total_driving_time_seconds
 
     def arrival_time(self):
@@ -117,8 +138,9 @@ class Vehicle:
             return self.departure_time
 
         last_visit = self.visits[-1]
-        return (last_visit.departure_time() +
-                timedelta(seconds=last_visit.location.driving_time_to(self.home_location)))
+        return last_visit.departure_time() + timedelta(
+            seconds=last_visit.location.driving_time_to(self.home_location)
+        )
 
 
 @planning_solution
@@ -134,7 +156,7 @@ def vehicle_routing_constraints(factory: ConstraintFactory):
     return [
         vehicle_capacity(factory),
         service_finished_after_max_end_time(factory),
-        minimize_travel_time(factory)
+        minimize_travel_time(factory),
     ]
 
 
@@ -144,21 +166,27 @@ def vehicle_routing_constraints(factory: ConstraintFactory):
 
 
 def vehicle_capacity(factory: ConstraintFactory):
-    return (factory.for_each(Vehicle)
-            .filter(lambda vehicle: vehicle.total_demand() > vehicle.capacity)
-            .penalize(HardSoftScore.ONE_HARD,
-                      lambda vehicle: vehicle.total_demand() - vehicle.capacity)
-            .as_constraint('VEHICLE_CAPACITY')
-            )
+    return (
+        factory.for_each(Vehicle)
+        .filter(lambda vehicle: vehicle.total_demand() > vehicle.capacity)
+        .penalize(
+            HardSoftScore.ONE_HARD,
+            lambda vehicle: vehicle.total_demand() - vehicle.capacity,
+        )
+        .as_constraint("VEHICLE_CAPACITY")
+    )
 
 
 def service_finished_after_max_end_time(factory: ConstraintFactory):
-    return (factory.for_each(Visit)
-            .filter(lambda visit: visit.is_service_finished_after_max_end_time())
-            .penalize(HardSoftScore.ONE_HARD,
-                      lambda visit: visit.service_finished_delay_in_minutes())
-            .as_constraint('SERVICE_FINISHED_AFTER_MAX_END_TIME')
-            )
+    return (
+        factory.for_each(Visit)
+        .filter(lambda visit: visit.is_service_finished_after_max_end_time())
+        .penalize(
+            HardSoftScore.ONE_HARD,
+            lambda visit: visit.service_finished_delay_in_minutes(),
+        )
+        .as_constraint("SERVICE_FINISHED_AFTER_MAX_END_TIME")
+    )
 
 
 ##############################################
@@ -169,9 +197,10 @@ def service_finished_after_max_end_time(factory: ConstraintFactory):
 def minimize_travel_time(factory: ConstraintFactory):
     return (
         factory.for_each(Vehicle)
-        .penalize(HardSoftScore.ONE_SOFT,
-                  lambda vehicle: vehicle.total_driving_time_seconds())
-        .as_constraint('MINIMIZE_TRAVEL_TIME')
+        .penalize(
+            HardSoftScore.ONE_SOFT, lambda vehicle: vehicle.total_driving_time_seconds()
+        )
+        .as_constraint("MINIMIZE_TRAVEL_TIME")
     )
 
 
@@ -183,8 +212,8 @@ def test_vrp():
             constraint_provider_function=vehicle_routing_constraints
         ),
         termination_config=TerminationConfig(
-            best_score_limit='0hard/-300soft',
-        )
+            best_score_limit="0hard/-300soft",
+        ),
     )
 
     solver = SolverFactory.create(solver_config).build_solver()
@@ -199,7 +228,7 @@ def test_vrp():
         id(l2): 60,
         id(l3): 60 * 60,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l2.driving_time_seconds = {
@@ -207,7 +236,7 @@ def test_vrp():
         id(l2): 0,
         id(l3): 60,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l3.driving_time_seconds = {
@@ -215,7 +244,7 @@ def test_vrp():
         id(l2): 60 * 60,
         id(l3): 0,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l4.driving_time_seconds = {
@@ -223,7 +252,7 @@ def test_vrp():
         id(l2): 60 * 60,
         id(l3): 60 * 60,
         id(l4): 0,
-        id(l5): 60
+        id(l5): 60,
     }
 
     l5.driving_time_seconds = {
@@ -231,19 +260,19 @@ def test_vrp():
         id(l2): 60 * 60,
         id(l3): 60 * 60,
         id(l4): 60,
-        id(l5): 0
+        id(l5): 0,
     }
 
     problem = VehicleRoutePlan(
         vehicles=[
             Vehicle(
-                id='A',
+                id="A",
                 capacity=3,
                 home_location=l1,
                 departure_time=datetime(2020, 1, 1),
             ),
             Vehicle(
-                id='B',
+                id="B",
                 capacity=3,
                 home_location=l4,
                 departure_time=datetime(2020, 1, 1),
@@ -251,8 +280,8 @@ def test_vrp():
         ],
         visits=[
             Visit(
-                id='1',
-                name='1',
+                id="1",
+                name="1",
                 location=l2,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
@@ -260,8 +289,8 @@ def test_vrp():
                 service_duration=timedelta(hours=1),
             ),
             Visit(
-                id='2',
-                name='2',
+                id="2",
+                name="2",
                 location=l3,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
@@ -269,15 +298,15 @@ def test_vrp():
                 service_duration=timedelta(hours=1),
             ),
             Visit(
-                id='3',
-                name='3',
+                id="3",
+                name="3",
                 location=l5,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
                 max_end_time=datetime(2020, 1, 1, hour=10),
                 service_duration=timedelta(hours=1),
             ),
-        ]
+        ],
     )
     solution = solver.solve(problem)
     assert [visit.arrival_time for visit in solution.visits] == [
@@ -286,7 +315,7 @@ def test_vrp():
         # Visit 2: 1-minute travel time from visit 1 + 1-hour service
         datetime(2020, 1, 1, hour=1, minute=2),
         # Visit 3: 1-minute travel time from Vehicle B start
-        datetime(2020, 1, 1, hour=0, minute=1)
+        datetime(2020, 1, 1, hour=0, minute=1),
     ]
-    assert [visit.id for visit in solution.vehicles[0].visits] == ['1', '2']
-    assert [visit.id for visit in solution.vehicles[1].visits] == ['3']
+    assert [visit.id for visit in solution.vehicles[0].visits] == ["1", "2"]
+    assert [visit.id for visit in solution.vehicles[1].visits] == ["3"]

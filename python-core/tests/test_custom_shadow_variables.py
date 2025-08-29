@@ -1,29 +1,32 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from timefold.solver import *
-from timefold.solver.config import *
-from timefold.solver.domain import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.score import *
 from typing import Annotated, Optional, List
 
 
 def test_custom_shadow_variable():
     class MyVariableListener(VariableListener):
         def after_variable_changed(self, score_director: ScoreDirector, entity):
-            score_director.before_variable_changed(entity, 'value_squared')
+            score_director.before_variable_changed(entity, "value_squared")
             if entity.value is None:
                 entity.value_squared = None
             else:
-                entity.value_squared = entity.value ** 2
-            score_director.after_variable_changed(entity, 'value_squared')
+                entity.value_squared = entity.value**2
+            score_director.after_variable_changed(entity, "value_squared")
 
     @planning_entity
     @dataclass
     class MyPlanningEntity:
-        value: Annotated[Optional[int], PlanningVariable] \
-            = field(default=None)
-        value_squared: Annotated[Optional[int], ShadowVariable(variable_listener_class=MyVariableListener,
-                                                               source_variable_name='value')] = field(default=None)
+        value: Annotated[Optional[int], PlanningVariable] = field(default=None)
+        value_squared: Annotated[
+            Optional[int],
+            ShadowVariable(
+                variable_listener_class=MyVariableListener, source_variable_name="value"
+            ),
+        ] = field(default=None)
 
     @constraint_provider
     def my_constraints(constraint_factory: ConstraintFactory):
@@ -31,7 +34,7 @@ def test_custom_shadow_variable():
             constraint_factory.for_each(MyPlanningEntity)
             .filter(lambda entity: entity.value * 2 == entity.value_squared)
             .reward(SimpleScore.ONE)
-            .as_constraint('Double value is value squared')
+            .as_constraint("Double value is value squared")
         ]
 
     @planning_solution
@@ -47,9 +50,7 @@ def test_custom_shadow_variable():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             constraint_provider_function=my_constraints
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='1'
-        )
+        termination_config=TerminationConfig(best_score_limit="1"),
     )
 
     solver_factory = SolverFactory.create(solver_config)
@@ -64,26 +65,30 @@ def test_custom_shadow_variable():
 def test_custom_shadow_variable_with_variable_listener_ref():
     class MyVariableListener(VariableListener):
         def after_variable_changed(self, score_director: ScoreDirector, entity):
-            score_director.before_variable_changed(entity, 'twice_value')
-            score_director.before_variable_changed(entity, 'value_squared')
+            score_director.before_variable_changed(entity, "twice_value")
+            score_director.before_variable_changed(entity, "value_squared")
             if entity.value is None:
                 entity.twice_value = None
                 entity.value_squared = None
             else:
                 entity.twice_value = 2 * entity.value
-                entity.value_squared = entity.value ** 2
-            score_director.after_variable_changed(entity, 'value_squared')
-            score_director.after_variable_changed(entity, 'twice_value')
+                entity.value_squared = entity.value**2
+            score_director.after_variable_changed(entity, "value_squared")
+            score_director.after_variable_changed(entity, "twice_value")
 
     @planning_entity
     @dataclass
     class MyPlanningEntity:
-        value: Annotated[Optional[int], PlanningVariable] = \
-            field(default=None)
-        value_squared: Annotated[Optional[int], ShadowVariable(
-            variable_listener_class=MyVariableListener, source_variable_name='value')] = field(default=None)
-        twice_value: Annotated[Optional[int], PiggybackShadowVariable(shadow_variable_name='value_squared')] = (
-            field(default=None))
+        value: Annotated[Optional[int], PlanningVariable] = field(default=None)
+        value_squared: Annotated[
+            Optional[int],
+            ShadowVariable(
+                variable_listener_class=MyVariableListener, source_variable_name="value"
+            ),
+        ] = field(default=None)
+        twice_value: Annotated[
+            Optional[int], PiggybackShadowVariable(shadow_variable_name="value_squared")
+        ] = field(default=None)
 
     @constraint_provider
     def my_constraints(constraint_factory: ConstraintFactory):
@@ -91,7 +96,7 @@ def test_custom_shadow_variable_with_variable_listener_ref():
             constraint_factory.for_each(MyPlanningEntity)
             .filter(lambda entity: entity.twice_value == entity.value_squared)
             .reward(SimpleScore.ONE)
-            .as_constraint('Double value is value squared')
+            .as_constraint("Double value is value squared")
         ]
 
     @planning_solution
@@ -107,9 +112,7 @@ def test_custom_shadow_variable_with_variable_listener_ref():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             constraint_provider_function=my_constraints
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='1'
-        )
+        termination_config=TerminationConfig(best_score_limit="1"),
     )
 
     solver_factory = SolverFactory.create(solver_config)
@@ -127,36 +130,49 @@ class Location:
     longitude: float
     driving_time_seconds: dict[int, int] = field(default_factory=dict)
 
-    def driving_time_to(self, other: 'Location') -> int:
+    def driving_time_to(self, other: "Location") -> int:
         return self.driving_time_seconds[id(other)]
 
 
 class ArrivalTimeUpdatingVariableListener(VariableListener):
-    def after_variable_changed(self, score_director: ScoreDirector, visit: 'Visit') -> None:
+    def after_variable_changed(
+        self, score_director: ScoreDirector, visit: "Visit"
+    ) -> None:
         if visit.vehicle is None:
             if visit.arrival_time is not None:
-                score_director.before_variable_changed(visit, 'arrival_time')
+                score_director.before_variable_changed(visit, "arrival_time")
                 visit.arrival_time = None
-                score_director.after_variable_changed(visit, 'arrival_time')
+                score_director.after_variable_changed(visit, "arrival_time")
             return
         previous_visit = visit.previous_visit
-        departure_time = visit.vehicle.departure_time if previous_visit is None else previous_visit.departure_time()
+        departure_time = (
+            visit.vehicle.departure_time
+            if previous_visit is None
+            else previous_visit.departure_time()
+        )
         next_visit = visit
-        arrival_time = ArrivalTimeUpdatingVariableListener.calculate_arrival_time(next_visit, departure_time)
+        arrival_time = ArrivalTimeUpdatingVariableListener.calculate_arrival_time(
+            next_visit, departure_time
+        )
         while next_visit is not None and next_visit.arrival_time != arrival_time:
-            score_director.before_variable_changed(next_visit, 'arrival_time')
+            score_director.before_variable_changed(next_visit, "arrival_time")
             next_visit.arrival_time = arrival_time
-            score_director.after_variable_changed(next_visit, 'arrival_time')
+            score_director.after_variable_changed(next_visit, "arrival_time")
             departure_time = next_visit.departure_time()
             next_visit = next_visit.next_visit
-            arrival_time = ArrivalTimeUpdatingVariableListener.calculate_arrival_time(next_visit, departure_time)
+            arrival_time = ArrivalTimeUpdatingVariableListener.calculate_arrival_time(
+                next_visit, departure_time
+            )
 
     @staticmethod
-    def calculate_arrival_time(visit: Optional['Visit'], previous_departure_time: Optional[datetime]) \
-            -> datetime | None:
+    def calculate_arrival_time(
+        visit: Optional["Visit"], previous_departure_time: Optional[datetime]
+    ) -> datetime | None:
         if visit is None or previous_departure_time is None:
             return None
-        return previous_departure_time + timedelta(seconds=visit.driving_time_seconds_from_previous_standstill())
+        return previous_departure_time + timedelta(
+            seconds=visit.driving_time_seconds_from_previous_standstill()
+        )
 
 
 @planning_entity
@@ -169,17 +185,27 @@ class Visit:
     min_start_time: datetime
     max_end_time: datetime
     service_duration: timedelta
-    vehicle: Annotated[Optional['Vehicle'], InverseRelationShadowVariable(source_variable_name='visits')] = (
-        field(default=None))
-    previous_visit: Annotated[Optional['Visit'], PreviousElementShadowVariable(source_variable_name='visits')] = (
-        field(default=None))
-    next_visit: Annotated[Optional['Visit'],
-    NextElementShadowVariable(source_variable_name='visits')] = field(default=None)
-    arrival_time: Annotated[Optional[datetime],
-    ShadowVariable(variable_listener_class=ArrivalTimeUpdatingVariableListener,
-                   source_variable_name='vehicle'),
-    ShadowVariable(variable_listener_class=ArrivalTimeUpdatingVariableListener,
-                   source_variable_name='previous_visit')] = field(default=None)
+    vehicle: Annotated[
+        Optional["Vehicle"],
+        InverseRelationShadowVariable(source_variable_name="visits"),
+    ] = field(default=None)
+    previous_visit: Annotated[
+        Optional["Visit"], PreviousElementShadowVariable(source_variable_name="visits")
+    ] = field(default=None)
+    next_visit: Annotated[
+        Optional["Visit"], NextElementShadowVariable(source_variable_name="visits")
+    ] = field(default=None)
+    arrival_time: Annotated[
+        Optional[datetime],
+        ShadowVariable(
+            variable_listener_class=ArrivalTimeUpdatingVariableListener,
+            source_variable_name="vehicle",
+        ),
+        ShadowVariable(
+            variable_listener_class=ArrivalTimeUpdatingVariableListener,
+            source_variable_name="previous_visit",
+        ),
+    ] = field(default=None)
 
     def departure_time(self) -> Optional[datetime]:
         if self.arrival_time is None:
@@ -190,10 +216,16 @@ class Visit:
     def start_service_time(self) -> Optional[datetime]:
         if self.arrival_time is None:
             return None
-        return self.min_start_time if (self.min_start_time < self.arrival_time) else self.arrival_time
+        return (
+            self.min_start_time
+            if (self.min_start_time < self.arrival_time)
+            else self.arrival_time
+        )
 
     def is_service_finished_after_max_end_time(self) -> bool:
-        return self.arrival_time is not None and self.departure_time() > self.max_end_time
+        return (
+            self.arrival_time is not None and self.departure_time() > self.max_end_time
+        )
 
     def service_finished_delay_in_minutes(self) -> int:
         if self.arrival_time is None:
@@ -202,7 +234,9 @@ class Visit:
 
     def driving_time_seconds_from_previous_standstill(self) -> int:
         if self.vehicle is None:
-            raise ValueError("This method must not be called when the shadow variables are not initialized yet.")
+            raise ValueError(
+                "This method must not be called when the shadow variables are not initialized yet."
+            )
 
         if self.previous_visit is None:
             return self.vehicle.home_location.driving_time_to(self.location)
@@ -240,10 +274,14 @@ class Vehicle:
         previous_location = self.home_location
 
         for visit in self.visits:
-            total_driving_time_seconds += previous_location.driving_time_to(visit.location)
+            total_driving_time_seconds += previous_location.driving_time_to(
+                visit.location
+            )
             previous_location = visit.location
 
-        total_driving_time_seconds += previous_location.driving_time_to(self.home_location)
+        total_driving_time_seconds += previous_location.driving_time_to(
+            self.home_location
+        )
         return total_driving_time_seconds
 
     def arrival_time(self):
@@ -251,8 +289,9 @@ class Vehicle:
             return self.departure_time
 
         last_visit = self.visits[-1]
-        return (last_visit.departure_time() +
-                timedelta(seconds=last_visit.location.driving_time_to(self.home_location)))
+        return last_visit.departure_time() + timedelta(
+            seconds=last_visit.location.driving_time_to(self.home_location)
+        )
 
 
 @planning_solution
@@ -268,7 +307,7 @@ def vehicle_routing_constraints(factory: ConstraintFactory):
     return [
         vehicle_capacity(factory),
         service_finished_after_max_end_time(factory),
-        minimize_travel_time(factory)
+        minimize_travel_time(factory),
     ]
 
 
@@ -276,34 +315,43 @@ def vehicle_routing_constraints(factory: ConstraintFactory):
 # Hard constraints
 ##############################################
 
+
 def vehicle_capacity(factory: ConstraintFactory):
-    return (factory.for_each(Vehicle)
-            .filter(lambda vehicle: vehicle.total_demand() > vehicle.capacity)
-            .penalize(HardSoftScore.ONE_HARD,
-                      lambda vehicle: vehicle.total_demand() - vehicle.capacity)
-            .as_constraint('VEHICLE_CAPACITY')
-            )
+    return (
+        factory.for_each(Vehicle)
+        .filter(lambda vehicle: vehicle.total_demand() > vehicle.capacity)
+        .penalize(
+            HardSoftScore.ONE_HARD,
+            lambda vehicle: vehicle.total_demand() - vehicle.capacity,
+        )
+        .as_constraint("VEHICLE_CAPACITY")
+    )
 
 
 def service_finished_after_max_end_time(factory: ConstraintFactory):
-    return (factory.for_each(Visit)
-            .filter(lambda visit: visit.is_service_finished_after_max_end_time())
-            .penalize(HardSoftScore.ONE_HARD,
-                      lambda visit: visit.service_finished_delay_in_minutes())
-            .as_constraint('SERVICE_FINISHED_AFTER_MAX_END_TIME')
-            )
+    return (
+        factory.for_each(Visit)
+        .filter(lambda visit: visit.is_service_finished_after_max_end_time())
+        .penalize(
+            HardSoftScore.ONE_HARD,
+            lambda visit: visit.service_finished_delay_in_minutes(),
+        )
+        .as_constraint("SERVICE_FINISHED_AFTER_MAX_END_TIME")
+    )
 
 
 ##############################################
 # Soft constraints
 ##############################################
 
+
 def minimize_travel_time(factory: ConstraintFactory):
     return (
         factory.for_each(Vehicle)
-        .penalize(HardSoftScore.ONE_SOFT,
-                  lambda vehicle: vehicle.total_driving_time_seconds())
-        .as_constraint('MINIMIZE_TRAVEL_TIME')
+        .penalize(
+            HardSoftScore.ONE_SOFT, lambda vehicle: vehicle.total_driving_time_seconds()
+        )
+        .as_constraint("MINIMIZE_TRAVEL_TIME")
     )
 
 
@@ -315,8 +363,8 @@ def test_complex_shadow_variable():
             constraint_provider_function=vehicle_routing_constraints
         ),
         termination_config=TerminationConfig(
-            best_score_limit='0hard/-300soft',
-        )
+            best_score_limit="0hard/-300soft",
+        ),
     )
 
     solver = SolverFactory.create(solver_config).build_solver()
@@ -331,7 +379,7 @@ def test_complex_shadow_variable():
         id(l2): 60,
         id(l3): 60 * 60,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l2.driving_time_seconds = {
@@ -339,7 +387,7 @@ def test_complex_shadow_variable():
         id(l2): 0,
         id(l3): 60,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l3.driving_time_seconds = {
@@ -347,7 +395,7 @@ def test_complex_shadow_variable():
         id(l2): 60 * 60,
         id(l3): 0,
         id(l4): 60 * 60,
-        id(l5): 60 * 60
+        id(l5): 60 * 60,
     }
 
     l4.driving_time_seconds = {
@@ -355,7 +403,7 @@ def test_complex_shadow_variable():
         id(l2): 60 * 60,
         id(l3): 60 * 60,
         id(l4): 0,
-        id(l5): 60
+        id(l5): 60,
     }
 
     l5.driving_time_seconds = {
@@ -363,19 +411,19 @@ def test_complex_shadow_variable():
         id(l2): 60 * 60,
         id(l3): 60 * 60,
         id(l4): 60,
-        id(l5): 0
+        id(l5): 0,
     }
 
     problem = VehicleRoutePlan(
         vehicles=[
             Vehicle(
-                id='A',
+                id="A",
                 capacity=3,
                 home_location=l1,
                 departure_time=datetime(2020, 1, 1),
             ),
             Vehicle(
-                id='B',
+                id="B",
                 capacity=3,
                 home_location=l4,
                 departure_time=datetime(2020, 1, 1),
@@ -383,8 +431,8 @@ def test_complex_shadow_variable():
         ],
         visits=[
             Visit(
-                id='1',
-                name='1',
+                id="1",
+                name="1",
                 location=l2,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
@@ -392,8 +440,8 @@ def test_complex_shadow_variable():
                 service_duration=timedelta(hours=1),
             ),
             Visit(
-                id='2',
-                name='2',
+                id="2",
+                name="2",
                 location=l3,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
@@ -401,15 +449,15 @@ def test_complex_shadow_variable():
                 service_duration=timedelta(hours=1),
             ),
             Visit(
-                id='3',
-                name='3',
+                id="3",
+                name="3",
                 location=l5,
                 demand=1,
                 min_start_time=datetime(2020, 1, 1),
                 max_end_time=datetime(2020, 1, 1, hour=10),
                 service_duration=timedelta(hours=1),
             ),
-        ]
+        ],
     )
     solution = solver.solve(problem)
     assert [visit.arrival_time for visit in solution.visits] == [
@@ -418,7 +466,7 @@ def test_complex_shadow_variable():
         # Visit 2: 1-minute travel time from visit 1 + 1-hour service
         datetime(2020, 1, 1, hour=1, minute=2),
         # Visit 3: 1-minute travel time from Vehicle B start
-        datetime(2020, 1, 1, hour=0, minute=1)
+        datetime(2020, 1, 1, hour=0, minute=1),
     ]
-    assert [visit.id for visit in solution.vehicles[0].visits] == ['1', '2']
-    assert [visit.id for visit in solution.vehicles[1].visits] == ['3']
+    assert [visit.id for visit in solution.vehicles[0].visits] == ["1", "2"]
+    assert [visit.id for visit in solution.vehicles[1].visits] == ["3"]

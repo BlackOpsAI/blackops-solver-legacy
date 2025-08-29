@@ -1,5 +1,5 @@
 from ._problem_change import ProblemChange, ProblemChangeWrapper
-from ._timefold_java_interop import update_log_level
+from ._blackops_java_interop import update_log_level
 from ._jpype_type_conversions import to_python_score
 from typing import TypeVar, TYPE_CHECKING, Generic, Callable
 from datetime import timedelta
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .score import Score
     from ai.timefold.solver.core.api.solver import Solver as _JavaSolver
 
-Solution_ = TypeVar('Solution_')
+Solution_ = TypeVar("Solution_")
 
 
 @dataclass
@@ -47,7 +47,8 @@ class BestSolutionChangedEvent(Generic[Solution_]):
     time_spent: timedelta
         The duration between starting solving and finding the current best solution.
     """
-    new_best_score: 'Score'
+
+    new_best_score: "Score"
     new_best_solution: Solution_
     is_new_best_solution_initialized: bool
     is_every_problem_change_processed: bool
@@ -68,12 +69,13 @@ class Solver(Generic[Solution_]):
     Note that despite that solve is not thread-safe for clients of this class,
     that method is free to do multithreading inside itself.
     """
-    _delegate: '_JavaSolver'
+
+    _delegate: "_JavaSolver"
     _solution_class: JClass
     _has_event_listener: bool
     _event_listener_list: list[Callable[[BestSolutionChangedEvent[Solution_]], None]]
 
-    def __init__(self, delegate: '_JavaSolver', solution_class: JClass):
+    def __init__(self, delegate: "_JavaSolver", solution_class: JClass):
         self._delegate = delegate
         self._solution_class = solution_class
         self._has_event_listener = False
@@ -101,11 +103,15 @@ class Solver(Generic[Solution_]):
         """
         from java.lang import Exception as JavaException
         from ai.timefold.jpyinterpreter.types.errors import PythonBaseException
-        from _jpyinterpreter import convert_to_java_python_like_object, unwrap_python_like_object
+        from _jpyinterpreter import (
+            convert_to_java_python_like_object,
+            unwrap_python_like_object,
+        )
+
         java_problem = convert_to_java_python_like_object(problem)
         if not self._solution_class.isInstance(java_problem):
             raise ValueError(
-                f'The problem ({problem}) is not an instance of the @planning_solution class ({self._solution_class})'
+                f"The problem ({problem}) is not an instance of the @planning_solution class ({self._solution_class})"
             )
         update_log_level()
         try:
@@ -113,8 +119,10 @@ class Solver(Generic[Solution_]):
         except PythonBaseException as e:
             raise unwrap_python_like_object(e)
         except JavaException as e:
-            raise RuntimeError(f'Solving failed due to an error: {e.getMessage()}.\n'
-                               f'Java stack trace: {e.stacktrace()}') from e
+            raise RuntimeError(
+                f"Solving failed due to an error: {e.getMessage()}.\n"
+                f"Java stack trace: {e.stacktrace()}"
+            ) from e
         return unwrap_python_like_object(java_solution)
 
     def is_solving(self) -> bool:
@@ -175,7 +183,9 @@ class Solver(Generic[Solution_]):
         """
         self._delegate.addProblemChange(ProblemChangeWrapper(problem_change))  # noqa
 
-    def add_problem_changes(self, problem_changes: list[ProblemChange[Solution_]]) -> None:
+    def add_problem_changes(
+        self, problem_changes: list[ProblemChange[Solution_]]
+    ) -> None:
         """
         Schedules multiple `ProblemChange`s to be processed.
         As a side effect, this restarts the `Solver`, effectively resetting all Terminations, but not `terminate_early`.
@@ -192,7 +202,9 @@ class Solver(Generic[Solution_]):
         --------
         add_problem_change
         """
-        self._delegate.addProblemChanges([ProblemChangeWrapper(problem_change) for problem_change in problem_changes])  # noqa
+        self._delegate.addProblemChanges(
+            [ProblemChangeWrapper(problem_change) for problem_change in problem_changes]
+        )  # noqa
 
     def is_every_problem_change_processed(self) -> bool:
         """
@@ -206,7 +218,9 @@ class Solver(Generic[Solution_]):
         """
         return self._delegate.isEveryProblemChangeProcessed()
 
-    def add_event_listener(self, event_listener: Callable[[BestSolutionChangedEvent[Solution_]], None]):
+    def add_event_listener(
+        self, event_listener: Callable[[BestSolutionChangedEvent[Solution_]], None]
+    ):
         """
         Adds a listener to be notified when a new best solution is found.
 
@@ -217,7 +231,7 @@ class Solver(Generic[Solution_]):
 
         Examples
         --------
-        >>> from timefold.solver import Solver, BestSolutionChangedEvent
+        >>> from blackops_legacy.solver import Solver, BestSolutionChangedEvent
         >>> from domain import Timetable, build_solver, generate_problem
         >>>
         >>> def best_solution_listener(event: BestSolutionChangedEvent[Timetable]) -> None:
@@ -229,20 +243,25 @@ class Solver(Generic[Solution_]):
         >>> solver.solve(timetable)
         """
         from ai.timefold.solver.core.api.solver.event import SolverEventListener
+
         event_listener_list = self._event_listener_list
         if not self._has_event_listener:
+
             @JImplements(SolverEventListener)
             class EventListener:
                 @JOverride
                 def bestSolutionChanged(self, event):
                     from _jpyinterpreter import unwrap_python_like_object
+
                     nonlocal event_listener_list
                     event = BestSolutionChangedEvent(
                         new_best_score=to_python_score(event.getNewBestScore()),
-                        new_best_solution=unwrap_python_like_object(event.getNewBestSolution()),
+                        new_best_solution=unwrap_python_like_object(
+                            event.getNewBestSolution()
+                        ),
                         is_new_best_solution_initialized=event.isNewBestSolutionInitialized(),
                         is_every_problem_change_processed=event.isEveryProblemChangeProcessed(),
-                        time_spent=timedelta(milliseconds=event.getTimeMillisSpent())
+                        time_spent=timedelta(milliseconds=event.getTimeMillisSpent()),
                     )
                     for listener in event_listener_list:
                         listener(event)
@@ -252,7 +271,9 @@ class Solver(Generic[Solution_]):
 
         event_listener_list.append(event_listener)
 
-    def remove_event_listener(self, event_listener: Callable[[BestSolutionChangedEvent[Solution_]], None]):
+    def remove_event_listener(
+        self, event_listener: Callable[[BestSolutionChangedEvent[Solution_]], None]
+    ):
         """
         Removes a listener added by `add_event_listener`.
 
@@ -264,4 +285,4 @@ class Solver(Generic[Solution_]):
         self._event_listener_list.remove(event_listener)
 
 
-__all__ = ['Solver', 'BestSolutionChangedEvent']
+__all__ = ["Solver", "BestSolutionChangedEvent"]

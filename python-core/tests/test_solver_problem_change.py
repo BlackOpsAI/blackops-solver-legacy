@@ -1,13 +1,14 @@
-from timefold.solver import *
-from timefold.solver.domain import *
-from timefold.solver.config import *
-from timefold.solver.score import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.config import *
+from blackops_legacy.solver.score import *
 
 from dataclasses import dataclass, field
 from typing import Annotated, List
 from threading import Thread
 
 import pytest
+
 
 @planning_entity
 @dataclass
@@ -21,7 +22,7 @@ def maximize_constraints(constraint_factory: ConstraintFactory):
     return [
         constraint_factory.for_each(Entity)
         .reward(SimpleScore.ONE, lambda entity: entity.value)
-        .as_constraint('Maximize value'),
+        .as_constraint("Maximize value"),
     ]
 
 
@@ -30,7 +31,7 @@ def minimize_constraints(constraint_factory: ConstraintFactory):
     return [
         constraint_factory.for_each(Entity)
         .penalize(SimpleScore.ONE, lambda entity: entity.value)
-        .as_constraint('Minimize value'),
+        .as_constraint("Minimize value"),
     ]
 
 
@@ -51,9 +52,13 @@ class AddEntity(ProblemChange[Solution]):
     def __init__(self, entity: Entity):
         self.entity = entity
 
-    def do_change(self, working_solution: Solution, problem_change_director: ProblemChangeDirector):
-        problem_change_director.add_entity(self.entity,
-                                           lambda working_entity: working_solution.entities.append(working_entity))
+    def do_change(
+        self, working_solution: Solution, problem_change_director: ProblemChangeDirector
+    ):
+        problem_change_director.add_entity(
+            self.entity,
+            lambda working_entity: working_solution.entities.append(working_entity),
+        )
 
 
 class RemoveEntity(ProblemChange[Solution]):
@@ -62,12 +67,16 @@ class RemoveEntity(ProblemChange[Solution]):
     def __init__(self, entity: Entity):
         self.entity = entity
 
-    def do_change(self, working_solution: Solution, problem_change_director: ProblemChangeDirector):
-        problem_change_director.remove_entity(self.entity,
-                                              lambda working_entity: working_solution.entities.remove(working_entity))
+    def do_change(
+        self, working_solution: Solution, problem_change_director: ProblemChangeDirector
+    ):
+        problem_change_director.remove_entity(
+            self.entity,
+            lambda working_entity: working_solution.entities.remove(working_entity),
+        )
 
 
-@pytest.mark.xfail(reason='Flaky test')
+@pytest.mark.xfail(reason="Flaky test")
 def test_add_entity():
     solver_config = SolverConfig(
         solution_class=Solution,
@@ -75,12 +84,10 @@ def test_add_entity():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             constraint_provider_function=maximize_constraints,
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='6'
-        )
+        termination_config=TerminationConfig(best_score_limit="6"),
     )
 
-    problem: Solution = Solution([Entity('A')], [1, 2, 3])
+    problem: Solution = Solution([Entity("A")], [1, 2, 3])
     solver = SolverFactory.create(solver_config).build_solver()
     result: Solution | None = None
 
@@ -91,11 +98,11 @@ def test_add_entity():
     thread = Thread(target=do_solve, args=(problem,), daemon=True)
 
     thread.start()
-    solver.add_problem_change(AddEntity(Entity('B')))
+    solver.add_problem_change(AddEntity(Entity("B")))
     thread.join(timeout=5)
 
     if thread.is_alive():
-        raise AssertionError(f'Thread {thread} did not finish after 5 seconds')
+        raise AssertionError(f"Thread {thread} did not finish after 5 seconds")
 
     assert result is not None
     assert len(result.entities) == 2
@@ -109,12 +116,10 @@ def test_remove_entity():
         score_director_factory_config=ScoreDirectorFactoryConfig(
             constraint_provider_function=minimize_constraints,
         ),
-        termination_config=TerminationConfig(
-            best_score_limit='-1'
-        )
+        termination_config=TerminationConfig(best_score_limit="-1"),
     )
 
-    problem: Solution = Solution([Entity('A'), Entity('B')], [1, 2, 3])
+    problem: Solution = Solution([Entity("A"), Entity("B")], [1, 2, 3])
     solver = SolverFactory.create(solver_config).build_solver()
     result: Solution | None = None
 
@@ -125,11 +130,11 @@ def test_remove_entity():
     thread = Thread(target=do_solve, args=(problem,), daemon=True)
 
     thread.start()
-    solver.add_problem_change(RemoveEntity(Entity('B')))
+    solver.add_problem_change(RemoveEntity(Entity("B")))
     thread.join(timeout=5)
 
     if thread.is_alive():
-        raise AssertionError(f'Thread {thread} did not finish after 5 seconds')
+        raise AssertionError(f"Thread {thread} did not finish after 5 seconds")
 
     assert result is not None
     assert len(result.entities) == 1

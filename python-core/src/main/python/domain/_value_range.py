@@ -1,7 +1,9 @@
-from .._timefold_java_interop import ensure_init
+from .._blackops_java_interop import ensure_init
 from typing import TYPE_CHECKING
 from decimal import Decimal
+
 if TYPE_CHECKING:
+
     class CountableValueRange:
         """
         A set of a values for a PlanningVariable.
@@ -10,6 +12,7 @@ if TYPE_CHECKING:
         they can also be stored in memory by their bounds to use less memory and provide more opportunities.
         It always has a discrete (as in non-continuous) range.
         """
+
         ...
 
 
@@ -17,6 +20,7 @@ class ValueRangeFactory:
     """
     Factory for `CountableValueRange`.
     """
+
     # Return cannot be typed, since CountableValueRange does not exist in the globals dict
     # since it is loaded lazily (to not start the JVM prematurely)
     @staticmethod
@@ -44,11 +48,15 @@ class ValueRangeFactory:
         import jpype.imports
         from ai.timefold.solver.python import PythonValueRangeFactory
         from java.math import BigInteger
+
         if step is None:
-            return PythonValueRangeFactory.createIntValueRange(BigInteger(str(start)), BigInteger(str(end)))
+            return PythonValueRangeFactory.createIntValueRange(
+                BigInteger(str(start)), BigInteger(str(end))
+            )
         else:
-            return PythonValueRangeFactory.createIntValueRange(BigInteger(str(start)), BigInteger(str(end)),
-                                                               BigInteger(str(step)))
+            return PythonValueRangeFactory.createIntValueRange(
+                BigInteger(str(start)), BigInteger(str(end)), BigInteger(str(step))
+            )
 
     @staticmethod
     def create_float_value_range(start: Decimal, end: Decimal, step: Decimal = None):
@@ -76,11 +84,15 @@ class ValueRangeFactory:
         import jpype.imports
         from ai.timefold.solver.python import PythonValueRangeFactory
         from java.math import BigDecimal
+
         if step is None:
-            return PythonValueRangeFactory.createFloatValueRange(BigDecimal(str(start)), BigDecimal(str(end)))
+            return PythonValueRangeFactory.createFloatValueRange(
+                BigDecimal(str(start)), BigDecimal(str(end))
+            )
         else:
-            return PythonValueRangeFactory.createFloatValueRange(BigDecimal(str(start)), BigDecimal(str(end)),
-                                                                 BigDecimal(str(step)))
+            return PythonValueRangeFactory.createFloatValueRange(
+                BigDecimal(str(start)), BigDecimal(str(end)), BigDecimal(str(step))
+            )
 
     @staticmethod
     def create_bool_value_range():
@@ -95,6 +107,7 @@ class ValueRangeFactory:
         ensure_init()
         import jpype.imports
         from ai.timefold.solver.python import PythonValueRangeFactory
+
         return PythonValueRangeFactory.createBooleanValueRange()
 
 
@@ -102,12 +115,13 @@ def lookup_value_range_class(name: str):
     ensure_init()
     import jpype.imports
     from ai.timefold.solver.core.api.domain.valuerange import CountableValueRange
+
     match name:
-        case 'CountableValueRange':
+        case "CountableValueRange":
             return CountableValueRange
 
         case _:
             raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-__all__ = ['ValueRangeFactory']
+__all__ = ["ValueRangeFactory"]

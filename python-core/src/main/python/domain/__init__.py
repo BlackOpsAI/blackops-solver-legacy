@@ -6,7 +6,7 @@ See `the modeling planning problems section in Timefold Solver documentation
 
 Examples
 --------
->>> from timefold.domain import PlanningVariable, PlanningId, planning_entity
+>>> from blackops_legacy.solver.domain import PlanningVariable, PlanningId, planning_entity
 >>> from typing import Annotated
 >>> from datetime import datetime
 >>>
@@ -32,16 +32,18 @@ from ._variable_listener import *
 from typing import TYPE_CHECKING as _TYPE_CHECKING
 
 if _TYPE_CHECKING:
+
     class CountableValueRange:
         ...
 
 
 def __getattr__(name: str):
     from ._value_range import lookup_value_range_class  # noqa
+
     return lookup_value_range_class(name)
 
 
 if not _TYPE_CHECKING:
-    exported = [name for name in globals().keys() if not name.startswith('_')]
-    exported += ['CountableValueRange']
+    exported = [name for name in globals().keys() if not name.startswith("_")]
+    exported += ["CountableValueRange"]
     __all__ = exported

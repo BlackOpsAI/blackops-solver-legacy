@@ -1,7 +1,7 @@
-from timefold.solver import *
-from timefold.solver.domain import *
-from timefold.solver.score import *
-from timefold.solver.config import *
+from blackops_legacy.solver import *
+from blackops_legacy.solver.domain import *
+from blackops_legacy.solver.score import *
+from blackops_legacy.solver.config import *
 
 from dataclasses import dataclass, field
 from typing import Annotated, List
@@ -23,18 +23,24 @@ class Entity:
 @dataclass
 class Solution:
     entity_list: Annotated[List[Entity], PlanningEntityCollectionProperty]
-    value_list: Annotated[List[Value], ProblemFactCollectionProperty, ValueRangeProvider]
-    score: Annotated[SimpleScore,
-    PlanningScore] = field(default=None)
+    value_list: Annotated[
+        List[Value], ProblemFactCollectionProperty, ValueRangeProvider
+    ]
+    score: Annotated[SimpleScore, PlanningScore] = field(default=None)
 
 
 def create_score_manager(constraint_provider) -> SolutionManager:
-    return SolutionManager.create(SolverFactory.create(
-        SolverConfig(solution_class=Solution,
-                     entity_class_list=[Entity],
-                     score_director_factory_config=ScoreDirectorFactoryConfig(
-                         constraint_provider_function=constraint_provider
-                     ))))
+    return SolutionManager.create(
+        SolverFactory.create(
+            SolverConfig(
+                solution_class=Solution,
+                entity_class_list=[Entity],
+                score_director_factory_config=ScoreDirectorFactoryConfig(
+                    constraint_provider_function=constraint_provider
+                ),
+            )
+        )
+    )
 
 
 def test_min():
@@ -44,13 +50,13 @@ def test_min():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.min(lambda entity: entity.value.number))
             .reward(SimpleScore.ONE, lambda min_value: min_value)
-            .as_constraint('Min value')
+            .as_constraint("Min value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -77,13 +83,13 @@ def test_max():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.max(lambda entity: entity.value.number))
             .reward(SimpleScore.ONE, lambda max_value: max_value)
-            .as_constraint('Max value')
+            .as_constraint("Max value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -110,13 +116,13 @@ def test_sum():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.sum(lambda entity: entity.value.number))
             .reward(SimpleScore.ONE, lambda sum_value: sum_value)
-            .as_constraint('Sum value')
+            .as_constraint("Sum value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -143,13 +149,13 @@ def test_average():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.average(lambda entity: entity.value.number))
             .reward(SimpleScore.ONE, lambda average_value: int(10 * average_value))
-            .as_constraint('Average value')
+            .as_constraint("Average value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -174,17 +180,17 @@ def test_count():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .filter(lambda entity: entity.code[0] == 'A')
+            .filter(lambda entity: entity.code[0] == "A")
             .group_by(ConstraintCollectors.count())
             .reward(SimpleScore.ONE, lambda count: count)
-            .as_constraint('Count value')
+            .as_constraint("Count value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a1: Entity = Entity('A1')
-    entity_a2: Entity = Entity('A2')
-    entity_b: Entity = Entity('B1')
+    entity_a1: Entity = Entity("A1")
+    entity_a2: Entity = Entity("A2")
+    entity_b: Entity = Entity("B1")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -204,13 +210,13 @@ def test_count_distinct():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.count_distinct(lambda entity: entity.value))
             .reward(SimpleScore.ONE, lambda count: count)
-            .as_constraint('Count distinct value')
+            .as_constraint("Count distinct value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -235,20 +241,23 @@ def test_to_consecutive_sequences():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.to_consecutive_sequences(
-                lambda entity: entity.value.number))
+            .group_by(
+                ConstraintCollectors.to_consecutive_sequences(
+                    lambda entity: entity.value.number
+                )
+            )
             .flatten_last(lambda sequences: sequences.getConsecutiveSequences())
             .reward(SimpleScore.ONE, lambda sequence: sequence.getCount() ** 2)
-            .as_constraint('squared sequence length')
+            .as_constraint("squared sequence length")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
-    entity_c: Entity = Entity('C')
-    entity_d: Entity = Entity('D')
-    entity_e: Entity = Entity('E')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
+    entity_c: Entity = Entity("C")
+    entity_d: Entity = Entity("D")
+    entity_e: Entity = Entity("E")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -260,9 +269,20 @@ def test_to_consecutive_sequences():
     value_8 = Value(8)
     value_9 = Value(9)
 
-    problem = Solution([entity_a, entity_b, entity_c, entity_d, entity_e],
-                       [value_1, value_2, value_3, value_4, value_5,
-                        value_6, value_7, value_8, value_9])
+    problem = Solution(
+        [entity_a, entity_b, entity_c, entity_d, entity_e],
+        [
+            value_1,
+            value_2,
+            value_3,
+            value_4,
+            value_5,
+            value_6,
+            value_7,
+            value_8,
+            value_9,
+        ],
+    )
 
     entity_a.value = value_1
     entity_b.value = value_3
@@ -296,13 +316,13 @@ def test_to_list():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.to_list(lambda entity: entity.value))
             .reward(SimpleScore.ONE, lambda values: len(values))
-            .as_constraint('list size')
+            .as_constraint("list size")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -329,13 +349,13 @@ def test_to_set():
             constraint_factory.for_each(Entity)
             .group_by(ConstraintCollectors.to_set(lambda entity: entity.value))
             .reward(SimpleScore.ONE, lambda values: len(values))
-            .as_constraint('set size')
+            .as_constraint("set size")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -360,16 +380,20 @@ def test_to_map():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.to_map(lambda entity: entity.code, lambda entity: entity.value.number))
-            .filter(lambda entity_map: next(iter(entity_map['A'])) == 1)
-            .reward(SimpleScore.ONE, lambda entity_map: next(iter(entity_map['B'])))
-            .as_constraint('map at B')
+            .group_by(
+                ConstraintCollectors.to_map(
+                    lambda entity: entity.code, lambda entity: entity.value.number
+                )
+            )
+            .filter(lambda entity_map: next(iter(entity_map["A"])) == 1)
+            .reward(SimpleScore.ONE, lambda entity_map: next(iter(entity_map["B"])))
+            .as_constraint("map at B")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -394,15 +418,17 @@ def test_to_sorted_set():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.to_sorted_set(lambda entity: entity.value.number))
+            .group_by(
+                ConstraintCollectors.to_sorted_set(lambda entity: entity.value.number)
+            )
             .reward(SimpleScore.ONE, lambda values: next(iter(values)))
-            .as_constraint('min')
+            .as_constraint("min")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -428,16 +454,19 @@ def test_to_sorted_map():
         return [
             constraint_factory.for_each(Entity)
             .group_by(
-                ConstraintCollectors.to_sorted_map(lambda entity: entity.code, lambda entity: entity.value.number))
-            .filter(lambda entity_map: next(iter(entity_map['B'])) == 1)
-            .reward(SimpleScore.ONE, lambda entity_map: next(iter(entity_map['A'])))
-            .as_constraint('map at A')
+                ConstraintCollectors.to_sorted_map(
+                    lambda entity: entity.code, lambda entity: entity.value.number
+                )
+            )
+            .filter(lambda entity_map: next(iter(entity_map["B"])) == 1)
+            .reward(SimpleScore.ONE, lambda entity_map: next(iter(entity_map["A"])))
+            .as_constraint("map at A")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -466,17 +495,20 @@ def test_conditionally():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.conditionally(lambda entity: entity.code[0] == 'A',
-                                                         ConstraintCollectors.count()))
+            .group_by(
+                ConstraintCollectors.conditionally(
+                    lambda entity: entity.code[0] == "A", ConstraintCollectors.count()
+                )
+            )
             .reward(SimpleScore.ONE, lambda count: count)
-            .as_constraint('Conditionally count value')
+            .as_constraint("Conditionally count value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a1: Entity = Entity('A1')
-    entity_a2: Entity = Entity('A2')
-    entity_b: Entity = Entity('B1')
+    entity_a1: Entity = Entity("A1")
+    entity_a2: Entity = Entity("A2")
+    entity_b: Entity = Entity("B1")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -494,20 +526,22 @@ def test_compose():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.compose(
-                ConstraintCollectors.min(lambda entity: entity.value.number),
-                ConstraintCollectors.max(lambda entity: entity.value.number),
-                lambda a, b: (a, b)
-            ))
+            .group_by(
+                ConstraintCollectors.compose(
+                    ConstraintCollectors.min(lambda entity: entity.value.number),
+                    ConstraintCollectors.max(lambda entity: entity.value.number),
+                    lambda a, b: (a, b),
+                )
+            )
             .reward(SimpleScore.ONE, lambda min_max: min_max[0] + min_max[1] * 10)
-            .as_constraint('Max value')
+            .as_constraint("Max value")
             # min is in lower digit; max in upper digit
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -532,18 +566,20 @@ def test_collect_and_then():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.collect_and_then(
-                ConstraintCollectors.min(lambda entity: entity.value.number),
-                lambda a: 2 * a
-            ))
+            .group_by(
+                ConstraintCollectors.collect_and_then(
+                    ConstraintCollectors.min(lambda entity: entity.value.number),
+                    lambda a: 2 * a,
+                )
+            )
             .reward(SimpleScore.ONE, lambda twice_min: twice_min)
-            .as_constraint('Double min value')
+            .as_constraint("Double min value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
 
     value_1 = Value(1)
     value_2 = Value(2)
@@ -568,19 +604,16 @@ def test_load_balance():
     def define_constraints(constraint_factory: ConstraintFactory):
         return [
             constraint_factory.for_each(Entity)
-            .group_by(ConstraintCollectors.load_balance(
-                lambda entity: entity.value
-            ))
-            .reward(SimpleScore.ONE,
-                    lambda balance: round(balance.unfairness() * 1000))
-            .as_constraint('Balanced value')
+            .group_by(ConstraintCollectors.load_balance(lambda entity: entity.value))
+            .reward(SimpleScore.ONE, lambda balance: round(balance.unfairness() * 1000))
+            .as_constraint("Balanced value")
         ]
 
     score_manager = create_score_manager(define_constraints)
 
-    entity_a: Entity = Entity('A')
-    entity_b: Entity = Entity('B')
-    entity_c: Entity = Entity('C')
+    entity_a: Entity = Entity("A")
+    entity_b: Entity = Entity("B")
+    entity_c: Entity = Entity("C")
 
     value_1 = Value(1)
     value_2 = Value(2)
