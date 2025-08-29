@@ -1,24 +1,38 @@
-# BlackOps Solver
+# BlackOps Solver (Legacy)
 
-_Legacy constraint solver for optimization problems._
-[BlackOps](https://github.com/blackops-solver/blackops-solver-legacy)
+[BlackOps](https://github.com/BlackOpsAI/blackops-solver-legacy)
 
-[![PyPI](https://img.shields.io/pypi/v/blackops_legacy?style=for-the-badge& "PyPI")](https://pypi.org/project/blackops_legacy/)
+[![PyPI](https://img.shields.io/pypi/v/blackops_legacy.?style=for-the-badge& "PyPI")](https://pypi.org/project/blackops_legacy./)
 [![Python support](https://img.shields.io/badge/Python-3.10+-brightgreen.svg?style=for-the-badge)](https://www.python.org/downloads)
 [![License](https://img.shields.io/github/license/blackops-solver/blackops-solver-legacy?style=for-the-badge&logo=apache)](https://www.apache.org/licenses/LICENSE-2.0)
 
-BlackOps Solver is an AI constraint solver you can use to optimize
+### Powered by:
+
+![Timefold Logo](https://raw.githubusercontent.com/TimefoldAI/timefold-solver/main/docs/src/modules/ROOT/images/shared/timefold-logo.png)
+
+_Planning optimization made easy_: [blackops_legacy.ai](https://blackops_legacy.ai)
+
+BlackOps Solver is a 100% Timefold 1.24.0 compatible AI constraint solver you can use to optimize
 the Vehicle Routing Problem, Employee Rostering, Maintenance Scheduling, Task Assignment, School Timetabling,
-Cloud Optimization, Conference Scheduling, Job Shop Scheduling and many more planning problems.
+Cloud Optimization, Conference Scheduling, Job Shop Scheduling and many more planning problems with Python.
 
-Using BlackOps Solver in Python is significantly slower
-than using the original Java constraint solver implementations.
+Using [Timefold Solver in Python](https://github.com/TimefoldAI/timefold-solver-python) used to be significantly slower than using [Timefold Solver for Java or Kotlin](https://github.com/TimefoldAI/timefold-solver).
 
-## Get started with BlackOps Solver in Python
+Therefore, the official Timefold Python solver has been [discontinued](https://github.com/TimefoldAI/timefold-solver/discussions/1698#discussioncomment-13842196) and the Timefold team is focusing on the Java and Kotlin solvers.
 
-* [Clone BlackOps Solver repository](https://github.com/blackops-solver/blackops-solver-legacy): `git clone https://github.com/blackops-solver/blackops-solver-legacy.git`
+BlackOps Solver is committed to three core goals:
 
-* Navigate to the project directory: `cd blackops-solver-legacy`
+- **Performance:** We are optimizing quickstart examples and have already achieved significant speedups by removing bottlenecks (for example, pydantic now validates only at the API boundary, not during solving). See our latest [benchmark results](https://github.com/BlackOpsAI/blackops-quickstarts-python/tree/main/benchmarks/report.md) for reference.
+
+- **Sustained Support:** This fork offers ongoing community support—issues and bugs will be addressed — but _we will not track every new Timefold release_. Our baseline remains version 1.24.0.
+
+- **Next-Generation Architecture:** In the meantime, we are developing a fully native Rust backend to deliver a new 100% API-compatible Python solver. This approach eliminates JPype overhead and connects directly to the Timefold JVM via JNI for maximum performance and efficiency.
+
+## Get started with BlackOps Solver
+
+* [Clone BlackOps Solver](https://github.com/BlackOpsAI/blackops-solver-legacy): `git clone https://github.com/BlackOpsAI/blackops-solver-legacy.git`
+
+* Navigate to the `quickstarts` directory and choose a quickstart: `cd blackops-solver/quickstarts/hello-world`
 
 ## Requirements
 
@@ -33,14 +47,14 @@ than using the original Java constraint solver implementations.
 
 1. Install the repo
    ```shell
-   $ pip install git+https://github.com/blackops-solver/blackops-solver-legacy.git
+   $ pip install git+https://github.com/BlackOpsAI/blackops-solver-legacy.git
    ```
 
 ## Source code overview
 
 ### Domain
 
-In BlackOps Solver, the domain has three parts:
+In Timefold Solver, the domain has three parts:
 
 - Problem Facts, which do not change.
 - Planning Entities, which have one or more planning variables.
@@ -144,7 +158,7 @@ def room_conflict(constraint_factory: ConstraintFactory) -> Constraint:
     )
 ```
 
-This is based on constraint streams from the original Timefold Solver implementation.
+Also see [Timefold Solver Documentation on Constraint Streams](https://github.com/TimefoldAI/timefold-solver/blob/1.24.x/docs/src/modules/ROOT/pages/constraints-and-score/score-calculation.adoc).
 
 ### Solve
 
@@ -172,11 +186,13 @@ solution = solver.solve(generate_problem())
 `solution` will be a `TimeTable` instance with planning
 variables set to the final best solution found.
 
-This is a legacy version of a constraint solver based on the Timefold architecture.
+For a full API spec, visit [the Timefold Documentation](https://github.com/TimefoldAI/timefold-solver/blob/1.24.x/docs/src/modules/ROOT/pages/introduction.adoc).
 
 ## Legal notice
 
-BlackOps Solver is a derivative work of Timefold Solver, OptaPlanner and OptaPy,
-which includes copyrights of the original creators, Red Hat Inc., TimefoldAI, affiliates, and contributors,
-that were all entirely licensed under the Apache-2.0 license.
-This is a legacy version with modified package structure.
+BlackOps Solver was forked on 03 August 2025 from Timefold's Python Solver, which was entirely Apache-2.0 licensed (a permissive license).
+
+The original Timefold Python Solver was [forked](https://timefold.ai/blog/2023/optaplanner-fork/) on 20 April 2023 from OptaPlanner and OptaPy.
+
+BlackOps Solver  is a derivative work of the Timefold Python Solver and OptaPy, which includes copyrights of the original creators, Timefold AI, Red Hat Inc., affiliates, and contributors, that were all entirely licensed under the Apache-2.0 license.
+Every source file has been modified.
